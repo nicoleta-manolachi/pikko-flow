@@ -1,0 +1,88 @@
+# Dependencies
+
+node_modules/
+
+# Expo
+
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Native
+
+android/.gradle/
+android/.idea/
+android/local.properties/
+android/app/build/
+android/build/
+android/app/.cxx/
+
+# React Native
+
+*.jks
+*.keystore
+*.hprof
+
+# Metro
+
+.metro-health-check*
+
+# Logs
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Environment variables
+
+.env
+.env.*
+!.env.example
+
+# macOS
+
+.DS_Store
+
+# Windows
+
+Thumbs.db
+ehthumbs.db
+
+# IDE
+
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Testing
+
+coverage/
+
+# Temporary files
+
+*.tmp
+*.temp
+
+# TypeScript
+
+*.tsbuildinfo
+
+# Expo generated files
+
+.expo/
+expo-env.d.ts
+
+# EAS
+
+.eas/
+
+# Misc
+
+*.orig
+*.swp
+*.swo
