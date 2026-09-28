@@ -3,7 +3,7 @@ import { daysLeft, isRunningLow, runOutLabel } from "@/utils/runout";
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRef } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -31,6 +31,17 @@ export default function ItemCard({
   const overdue = left != null && left < 0;
   const alertColor = overdue ? c.danger : c.warn;
 
+  function confirmDelete() {
+    Alert.alert(
+      "Delete item?",
+      `“${item.name}” will be removed from your pantry.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: onDelete },
+      ],
+    );
+  }
+
   return (
     <ReanimatedSwipeable
       ref={ref}
@@ -38,9 +49,8 @@ export default function ItemCard({
       overshootRight={false}
       onSwipeableOpen={(dir) => {
         ref.current?.close();
-        if (dir === "left")
-          onBought(); // left actions revealed = swiped right
-        else onDelete();
+        if (dir === "right") onPress();
+        else confirmDelete();
       }}
       renderLeftActions={() => (
         <View
@@ -49,7 +59,7 @@ export default function ItemCard({
             { backgroundColor: c.primary, alignItems: "flex-start" },
           ]}
         >
-          <Ionicons name="checkmark-circle" size={28} color={c.onPrimary} />
+          <Ionicons name="create-outline" size={26} color={c.onPrimary} />
         </View>
       )}
       renderRightActions={() => (
@@ -63,8 +73,7 @@ export default function ItemCard({
         </View>
       )}
     >
-      <Pressable
-        onPress={onPress}
+      <View
         style={[
           s.card,
           {
@@ -136,7 +145,7 @@ export default function ItemCard({
             />
           </Pressable>
         </View>
-      </Pressable>
+      </View>
     </ReanimatedSwipeable>
   );
 }

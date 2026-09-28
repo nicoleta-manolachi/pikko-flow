@@ -1,219 +1,206 @@
-import Chip from "@/components/Chip";
 import EmptyState from "@/components/EmptyState";
 import ItemCard from "@/components/ItemCard";
-import Snackbar from "@/components/Snackbar";
-import SortMenu from "@/components/SortMenu";
 import { useCategories, useItems, useStores } from "@/db/hooks";
-import {
-  deleteItem,
-  markBought,
-  restoreItem,
-  setToBuy,
-  type ItemRow,
-} from "@/db/queries";
-import { PRIORITIES, type Item } from "@/db/schema";
-import { useUiStore } from "@/store/uiStore";
-import { deleteImageFile } from "@/utils/images";
-import { applyView } from "@/utils/listing";
+import { deleteItem, markBought, setToBuy } from "@/db/queries";
 import { useColors } from "@/utils/theme";
+import { categoryIcon } from "@/utils/categoryIcons";
+import { applyView } from "@/utils/listing";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Alert,
-  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
+  Text,
   View,
 } from "react-native";
 
-export default function Pantry() {
+const PREVIEW_CATEGORIES = 5;
+const PREVIEW_STORES = 5;
+const PREVIEW_ITEMS = 3;
+
+export default function Home() {
   const c = useColors();
   const router = useRouter();
   const { items } = useItems();
   const categories = useCategories();
   const stores = useStores();
-  const {
-    sort,
-    search,
-    categoryId,
-    storeId,
-    priority,
-    setSort,
-    setSearch,
-    setCategoryId,
-    setStoreId,
-    setPriority,
-    resetFilters,
-  } = useUiStore();
-  const [pending, setPending] = useState<Item | null>(null); // last deleted item (for undo)
-
-  const visible = useMemo(
-    () => applyView(items, { search, categoryId, storeId, priority, sort }),
-    [items, search, categoryId, storeId, priority, sort],
-  );
-  const filtering =
-    !!search || categoryId != null || storeId != null || priority != null;
 
   const guard = (fn: () => Promise<unknown>) =>
     fn().catch(() => Alert.alert("Something went wrong", "Please try again."));
-  const commit = (it: Item | null) => it && deleteImageFile(it.imageUri); // permanently drop image after undo window
 
-  async function onDelete(row: ItemRow) {
-    commit(pending);
-    const { categoryName: _c, storeName: _s, ...item } = row as ItemRow;
-    await guard(() => deleteItem(item.id));
-    setPending(item);
-  }
+  const topItems = useMemo(
+    () =>
+      applyView(items, {
+        search: "",
+        categoryId: null,
+        storeId: null,
+        priority: null,
+        sort: "runout",
+      }).slice(0, PREVIEW_ITEMS),
+    [items],
+  );
 
-  async function onUndo() {
-    if (!pending) return;
-    await guard(() => restoreItem(pending));
-    setPending(null);
-  }
+  const storeItemCount = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const it of items) {
+      if (it.storeId != null) counts.set(it.storeId, (counts.get(it.storeId) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ padding: 12, gap: 10 }}>
-        <View
-          style={[s.search, { backgroundColor: c.card, borderColor: c.border }]}
-        >
-          <Ionicons name="search" size={18} color={c.sub} />
-          <TextInput
-            style={{ flex: 1, color: c.text, fontSize: 16 }}
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search items"
-            placeholderTextColor={c.sub}
-          />
-          {!!search && (
-            <Pressable onPress={() => setSearch("")}>
-              <Ionicons name="close-circle" size={18} color={c.sub} />
+    <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+      {/* Top Categories */}
+      <Section
+        title="Top Categories"
+        subtitle="Organize your groceries by type."
+        onSeeAll={() => router.push("/categories")}
+        empty={categories.length === 0}
+        emptyLabel="No categories yet. Add one from the Categories tab."
+      >
+        <View style={s.wrapRow}>
+          {categories.slice(0, PREVIEW_CATEGORIES).map((cat) => (
+            <Pressable
+              key={cat.id}
+              onPress={() => router.push("/categories")}
+              style={[s.pill, { backgroundColor: c.lemon500 }]}
+            >
+              <Ionicons name={categoryIcon(cat.name)} size={16} color={c.beetroot} />
+              <Text style={[s.pillText, { color: c.beetroot }]}>{cat.name}</Text>
+            </Pressable>
+          ))}
+          {categories.length > 0 && (
+            <Pressable
+              onPress={() => router.push("/categories")}
+              style={[s.pill, { backgroundColor: c.lemon300 }]}
+            >
+              <Ionicons name="add" size={16} color={c.beetroot} />
+              <Text style={[s.pillText, { color: c.beetroot }]}>See all</Text>
             </Pressable>
           )}
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <SortMenu value={sort} onChange={setSort} />
-          {PRIORITIES.map((p) => (
-            <Chip
-              key={p}
-              label={p}
-              selected={priority === p}
-              onPress={() => setPriority(priority === p ? null : p)}
-            />
-          ))}
-        </ScrollView>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.map((cat) => (
-            <Chip
-              key={cat.id}
-              label={cat.name}
-              selected={categoryId === cat.id}
-              onPress={() =>
-                setCategoryId(categoryId === cat.id ? null : cat.id)
-              }
-            />
-          ))}
-        </ScrollView>
-        {stores.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {stores.map((st) => (
-              <Chip
-                key={st.id}
-                label={`🛒 ${st.name}`}
-                selected={storeId === st.id}
-                onPress={() => setStoreId(storeId === st.id ? null : st.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
-      </View>
+      </Section>
 
-      <FlatList
-        data={visible}
-        keyExtractor={(i) => String(i.id)}
-        contentContainerStyle={{
-          paddingHorizontal: 12,
-          paddingBottom: 100,
-          gap: 10,
-        }}
-        renderItem={({ item }) => (
-          <ItemCard
-            item={item}
-            onPress={() =>
-              router.push({
-                pathname: "/item",
-                params: { id: String(item.id) },
-              })
-            }
-            onBought={() => guard(() => markBought(item.id))}
-            onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
-            onDelete={() => onDelete(item)}
-          />
-        )}
-        ListEmptyComponent={
-          items.length === 0 ? (
-            <EmptyState
-              icon="basket-outline"
-              title="Your pantry is empty"
-              subtitle="Add your first grocery item to start tracking what you need."
-              actionLabel="Add your first item"
-              onAction={() => router.push("/item")}
-            />
-          ) : filtering ? (
-            <EmptyState
-              icon="search-outline"
-              title="No matches"
-              subtitle="Try a different search or clear the filters."
-              actionLabel="Clear filters"
-              onAction={resetFilters}
-            />
-          ) : null
-        }
-      />
-
-      <Pressable
-        onPress={() => router.push("/item")}
-        style={[s.fab, { backgroundColor: c.primary }]}
-        accessibilityLabel="Add item"
+      {/* Stores */}
+      <Section
+        title="Stores"
+        subtitle="Manage where you shop."
+        onSeeAll={() => router.push("/stores")}
+        empty={stores.length === 0}
+        emptyLabel="No stores yet. Add one from the Stores tab."
       >
-        <Ionicons name="add" size={30} color={c.onPrimary} />
-      </Pressable>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+          {stores.slice(0, PREVIEW_STORES).map((st) => {
+            const count = storeItemCount.get(st.id) ?? 0;
+            return (
+              <Pressable
+                key={st.id}
+                onPress={() => router.push("/stores")}
+                style={[s.storeCard, { backgroundColor: c.card, borderColor: c.border }]}
+              >
+                <View style={[s.storeImage, { backgroundColor: c.chip }]}>
+                  <Ionicons name="image-outline" size={28} color={c.sub} />
+                </View>
+                <Text style={[s.storeName, { color: c.beetroot }]} numberOfLines={1}>
+                  {st.name}
+                </Text>
+                <View style={s.storeMetaRow}>
+                  <Ionicons name="basket-outline" size={13} color={c.sub} />
+                  <Text style={{ color: c.sub, fontSize: 12 }}>
+                    {count} item{count === 1 ? "" : "s"}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </Section>
 
-      <Snackbar
-        visibleKey={pending?.id ?? null}
-        message={`Deleted “${pending?.name ?? ""}”`}
-        actionLabel="UNDO"
-        onAction={onUndo}
-        onTimeout={() => {
-          commit(pending);
-          setPending(null);
-        }}
-      />
+      {/* Items */}
+      <Section
+        title="Items"
+        subtitle="Keep track of everything."
+        onSeeAll={() => router.push("/pantry")}
+        empty={items.length === 0}
+        emptyComponent={
+          <EmptyState
+            icon="basket-outline"
+            title="Your pantry is empty"
+            subtitle="Add your first grocery item to start tracking what you need."
+            actionLabel="Add your first item"
+            onAction={() => router.push("/item")}
+          />
+        }
+      >
+        <View style={{ gap: 10 }}>
+          {topItems.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onPress={() => router.push({ pathname: "/item", params: { id: String(item.id) } })}
+              onBought={() => guard(() => markBought(item.id))}
+              onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
+              onDelete={() => guard(() => deleteItem(item.id))}
+            />
+          ))}
+        </View>
+      </Section>
+    </ScrollView>
+  );
+}
+
+function Section({
+  title,
+  subtitle,
+  onSeeAll,
+  empty,
+  emptyLabel,
+  emptyComponent,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  onSeeAll: () => void;
+  empty: boolean;
+  emptyLabel?: string;
+  emptyComponent?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const c = useColors();
+  return (
+    <View style={s.section}>
+      <View style={s.sectionHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.sectionTitle, { color: c.beetroot }]}>{title}</Text>
+          <Text style={{ color: c.sub, marginTop: 2 }}>{subtitle}</Text>
+        </View>
+      </View>
+      {empty
+        ? emptyComponent ?? <Text style={{ color: c.sub, paddingHorizontal: 20 }}>{emptyLabel}</Text>
+        : children}
     </View>
   );
 }
+
 const s = StyleSheet.create({
-  search: {
+  section: { paddingHorizontal: 20, marginTop: 28 },
+  sectionHeader: { flexDirection: "row", alignItems: "flex-start", marginBottom: 14 },
+  sectionTitle: { fontSize: 22, fontWeight: "800" },
+  wrapRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  pill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 18,
   },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 6,
-  },
+  pillText: { fontSize: 14, fontWeight: "600" },
+  storeCard: { width: 150, borderRadius: 14, borderWidth: 1, overflow: "hidden", paddingBottom: 10 },
+  storeImage: { height: 90, alignItems: "center", justifyContent: "center" },
+  storeName: { fontSize: 15, fontWeight: "700", marginTop: 8, marginHorizontal: 10 },
+  storeMetaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, marginHorizontal: 10 },
 });
