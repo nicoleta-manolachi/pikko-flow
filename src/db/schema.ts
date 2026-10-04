@@ -1,18 +1,22 @@
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const UNITS = ['pcs', 'kg', 'g', 'L', 'ml', 'pack'] as const;
-export const PRIORITIES = ['low', 'medium', 'high'] as const;
+export const PRIORITIES = ['Low', 'Medium', 'High'] as const;
 export type Unit = (typeof UNITS)[number];
 export type Priority = (typeof PRIORITIES)[number];
 
 export const categories = sqliteTable('categories', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull().unique(),
+  icon: text('icon'), // an Ionicons name the user picked; null falls back to a name-based guess
 });
 
+// db/schema.ts
 export const stores = sqliteTable('stores', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull().unique(),
+  imageUri: text('image_uri'),
+  address: text('address'),
 });
 
 export const items = sqliteTable('items', {
@@ -21,13 +25,13 @@ export const items = sqliteTable('items', {
   imageUri: text('image_uri'),
   quantity: real('quantity').notNull().default(1),
   unit: text('unit', { enum: UNITS }).notNull().default('pcs'),
-  priority: text('priority', { enum: PRIORITIES }).notNull().default('medium'),
+  priority: text('priority', { enum: PRIORITIES }).notNull().default('Medium'),
   categoryId: integer('category_id').references(() => categories.id, { onDelete: 'set null' }),
   storeId: integer('store_id').references(() => stores.id, { onDelete: 'set null' }),
   avgConsumeDays: integer('avg_consume_days'),
   lastPurchasedAt: integer('last_purchased_at', { mode: 'timestamp_ms' }),
-  toBuy: integer('to_buy', { mode: 'boolean' }).notNull().default(false),
-  notes: text('notes'),
+  checkedAt: integer('checked_at', { mode: 'timestamp_ms' }), // set while shopping; cleared when the item leaves/re-enters the list
+  toBuy: integer('to_buy', { mode: 'boolean' }).notNull().default(false),  notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
 });

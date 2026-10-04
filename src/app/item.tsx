@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
-import ItemForm, { type ItemFormValues } from '@/components/ItemForm';
+import ItemForm, { type ItemFormValues } from '@/components/form/ItemForm';
 import { createItem, deleteItem, getItem, updateItem } from '@/db/queries';
 import type { Item } from '@/db/schema';
 import { deleteImageFile, persistImage } from '@/utils/images';

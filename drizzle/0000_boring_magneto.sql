@@ -10,7 +10,7 @@ CREATE TABLE `items` (
 	`image_uri` text,
 	`quantity` real DEFAULT 1 NOT NULL,
 	`unit` text DEFAULT 'pcs' NOT NULL,
-	`priority` text DEFAULT 'medium' NOT NULL,
+	`priority` text DEFAULT 'Medium' NOT NULL,
 	`category_id` integer,
 	`store_id` integer,
 	`avg_consume_days` integer,

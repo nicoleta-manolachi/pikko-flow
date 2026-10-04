@@ -29,7 +29,7 @@ export default function SortMenu({ value, onChange }: { value: SortKey; onChange
             {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
               <Pressable key={k} style={s.row} onPress={() => { onChange(k); setOpen(false); }}>
                 <Text style={{ color: c.text, fontSize: 16, flex: 1 }}>{SORT_LABELS[k]}</Text>
-                {k === value && <Ionicons name="checkmark" size={20} color={c.primary} />}
+                {k === value && <Ionicons name="checkmark" size={20} color={c.beetroot} />}
               </Pressable>
             ))}
           </View>

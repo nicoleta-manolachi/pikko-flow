@@ -5,7 +5,7 @@ import type { BottomTabBarProps } from "expo-router/js-tabs";
 import { PlatformPressable } from "expo-router/react-navigation";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ScreenHeader, { greeting } from "@/components/ScreenHeader";
+import ScreenHeader, { greeting } from "@/components/layouts/ScreenHeader";
 import type { Colors } from "@/utils/theme";
 
 const BAR_HEIGHT = 72;
@@ -19,15 +19,6 @@ const SUBTITLES: Record<string, string> = {
   stores: "Where are you shopping today?",
   categories: "Organize your groceries",
   shopping: "Your list for the store",
-};
-
-// keys into Colors (utils/theme.ts) — each has a matching `${key}100` background variant
-const ROUTE_COLOR_KEY: Record<string, keyof Colors> = {
-  index: "beetroot",
-  pantry: "farmGreen",
-  stores: "lemon",
-  categories: "pumpkin",
-  shopping: "lemonGreen",
 };
 
 type ColorKey = keyof Colors;
@@ -46,32 +37,23 @@ const HEADER_COLORS: RouteHeaderColors[] = [
 
 // floating tab bar: active color + its 100-shade pill background, per screen
 const NAV_COLORS: RouteNavColors[] = [
-  { route: "index", base: "beetroot", bg100: "beetroot100" },
-  { route: "pantry", base: "farmGreen", bg100: "farmGreen100" },
-  { route: "stores", base: "lemon", bg100: "lemon200" },
-  { route: "categories", base: "pumpkin", bg100: "pumpkin100" },
-  { route: "shopping", base: "lemonGreen", bg100: "lemonGreen100" },
+  { route: "index", base: "beetroot", bg100: "beetroot300" },
+  { route: "pantry", base: "farmGreen", bg100: "farmGreen300" },
+  { route: "stores", base: "beetroot", bg100: "lemon400" },
+  { route: "categories", base: "beetroot", bg100: "pumpkin400" },
+  { route: "shopping", base: "lemonGreen", bg100: "lemonGreen300" },
 ];
 
 function findHeaderColors(c: Colors, routeName: string) {
   const entry = HEADER_COLORS.find((r) => r.route === routeName);
-  return { bg: c[entry?.bg ?? "primary"], text: c[entry?.text ?? "onPrimary"] };
+  return { bg: c[entry?.bg ?? "beetroot"], text: c[entry?.text ?? "card"] };
 }
 
 function findNavColors(c: Colors, routeName: string) {
   const entry = NAV_COLORS.find((r) => r.route === routeName);
   return {
-    base: c[entry?.base ?? "primary"],
+    base: c[entry?.base ?? "beetroot"],
     bg100: c[entry?.bg100 ?? "chip"],
-  };
-}
-
-function routeColors(c: Colors, routeName: string) {
-  const key = ROUTE_COLOR_KEY[routeName] ?? "primary";
-  const bg100Key = `${key}100` as keyof Colors;
-  return {
-    base: c[key] as string,
-    bg100: (c[bg100Key] as string) ?? c.chip,
   };
 }
 
@@ -155,7 +137,7 @@ export default function TabsLayout() {
           backgroundColor: c.bg,
           paddingBottom: BAR_HEIGHT + insets.bottom + BOTTOM_MARGIN,
         },
-        headerStyle: { backgroundColor: c.card, borderBottomColor: c.border },
+        headerStyle: { backgroundColor: c.card },
         headerTintColor: c.text,
         headerTitleAlign: "center",
         headerShadowVisible: true,
@@ -218,7 +200,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="shopping"
         options={{
-          title: "Shoping list",
+          title: "List",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="basket-outline" color={color} size={size} />
           ),

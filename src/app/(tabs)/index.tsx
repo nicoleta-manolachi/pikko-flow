@@ -1,5 +1,5 @@
 import EmptyState from "@/components/EmptyState";
-import ItemCard from "@/components/ItemCard";
+import ItemCard from "@/components/cards/ItemCard";
 import { useCategories, useItems, useStores } from "@/db/hooks";
 import { deleteItem, markBought, setToBuy } from "@/db/queries";
 import { useColors } from "@/utils/theme";
@@ -16,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 
 const PREVIEW_CATEGORIES = 5;
 const PREVIEW_STORES = 5;
@@ -46,7 +47,8 @@ export default function Home() {
   const storeItemCount = useMemo(() => {
     const counts = new Map<number, number>();
     for (const it of items) {
-      if (it.storeId != null) counts.set(it.storeId, (counts.get(it.storeId) ?? 0) + 1);
+      if (it.storeId != null)
+        counts.set(it.storeId, (counts.get(it.storeId) ?? 0) + 1);
     }
     return counts;
   }, [items]);
@@ -68,8 +70,14 @@ export default function Home() {
               onPress={() => router.push("/categories")}
               style={[s.pill, { backgroundColor: c.lemon500 }]}
             >
-              <Ionicons name={categoryIcon(cat.name)} size={16} color={c.beetroot} />
-              <Text style={[s.pillText, { color: c.beetroot }]}>{cat.name}</Text>
+              <Ionicons
+                name={(cat.icon ?? categoryIcon(cat.name)) as any}
+                size={16}
+                color={c.beetroot}
+              />
+              <Text style={[s.pillText, { color: c.beetroot }]}>
+                {cat.name}
+              </Text>
             </Pressable>
           ))}
           {categories.length > 0 && (
@@ -92,19 +100,36 @@ export default function Home() {
         empty={stores.length === 0}
         emptyLabel="No stores yet. Add one from the Stores tab."
       >
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 12 }}
+        >
           {stores.slice(0, PREVIEW_STORES).map((st) => {
             const count = storeItemCount.get(st.id) ?? 0;
             return (
               <Pressable
                 key={st.id}
                 onPress={() => router.push("/stores")}
-                style={[s.storeCard, { backgroundColor: c.card, borderColor: c.border }]}
+                style={[
+                  s.storeCard,
+                  { backgroundColor: c.card, borderColor: c.border },
+                ]}
               >
                 <View style={[s.storeImage, { backgroundColor: c.chip }]}>
-                  <Ionicons name="image-outline" size={28} color={c.sub} />
+                  {st.imageUri ? (
+                    <Image
+                      source={{ uri: st.imageUri }}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  ) : (
+                    <Ionicons name="image-outline" size={28} color={c.sub} />
+                  )}
                 </View>
-                <Text style={[s.storeName, { color: c.beetroot }]} numberOfLines={1}>
+                <Text
+                  style={[s.storeName, { color: c.beetroot }]}
+                  numberOfLines={1}
+                >
                   {st.name}
                 </Text>
                 <View style={s.storeMetaRow}>
@@ -140,8 +165,12 @@ export default function Home() {
             <ItemCard
               key={item.id}
               item={item}
-              onPress={() => router.push({ pathname: "/item", params: { id: String(item.id) } })}
-              onBought={() => guard(() => markBought(item.id))}
+              onPress={() =>
+                router.push({
+                  pathname: "/item",
+                  params: { id: String(item.id) },
+                })
+              }
               onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
               onDelete={() => guard(() => deleteItem(item.id))}
             />
@@ -179,7 +208,11 @@ function Section({
         </View>
       </View>
       {empty
-        ? emptyComponent ?? <Text style={{ color: c.sub, paddingHorizontal: 20 }}>{emptyLabel}</Text>
+        ? (emptyComponent ?? (
+            <Text style={{ color: c.sub, paddingHorizontal: 20 }}>
+              {emptyLabel}
+            </Text>
+          ))
         : children}
     </View>
   );
@@ -187,7 +220,11 @@ function Section({
 
 const s = StyleSheet.create({
   section: { paddingHorizontal: 20, marginTop: 28 },
-  sectionHeader: { flexDirection: "row", alignItems: "flex-start", marginBottom: 14 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 14,
+  },
   sectionTitle: { fontSize: 22, fontWeight: "800" },
   wrapRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   pill: {
@@ -199,8 +236,30 @@ const s = StyleSheet.create({
     borderRadius: 18,
   },
   pillText: { fontSize: 14, fontWeight: "600" },
-  storeCard: { width: 150, borderRadius: 14, borderWidth: 1, overflow: "hidden", paddingBottom: 10 },
-  storeImage: { height: 90, alignItems: "center", justifyContent: "center" },
-  storeName: { fontSize: 15, fontWeight: "700", marginTop: 8, marginHorizontal: 10 },
-  storeMetaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, marginHorizontal: 10 },
+  storeCard: {
+    width: 150,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: "hidden",
+    paddingBottom: 10,
+  },
+  storeImage: {
+    height: 90,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  storeName: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: 8,
+    marginHorizontal: 10,
+  },
+  storeMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+    marginHorizontal: 10,
+  },
 });

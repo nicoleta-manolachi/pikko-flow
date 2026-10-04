@@ -7,22 +7,24 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import PriorityBadge from "./PriorityBadge";
+import PriorityBadge from "../PriorityBadge";
 
 type Props = {
   item: ItemRow;
   onPress: () => void;
-  onBought: () => void;
   onToggleBuy: () => void;
   onDelete: () => void;
+  accentColor?: string; // "in shopping list" icon color, defaults to c.beetroot
+  editIconColor?: string; // swipe-right action icon color, defaults to c.beetroot200
 };
 
 export default function ItemCard({
   item,
   onPress,
-  onBought,
   onToggleBuy,
   onDelete,
+  accentColor,
+  editIconColor,
 }: Props) {
   const c = useColors();
   const ref = useRef<SwipeableMethods>(null);
@@ -30,6 +32,9 @@ export default function ItemCard({
   const low = isRunningLow(item);
   const overdue = left != null && left < 0;
   const alertColor = overdue ? c.danger : c.warn;
+
+  const accent = accentColor ?? c.beetroot;
+  const editIcon = editIconColor ?? c.beetroot200;
 
   function confirmDelete() {
     Alert.alert(
@@ -56,10 +61,10 @@ export default function ItemCard({
         <View
           style={[
             s.action,
-            { backgroundColor: c.primary, alignItems: "flex-start" },
+            { backgroundColor: c.beetroot700, alignItems: "flex-start" },
           ]}
         >
-          <Ionicons name="create-outline" size={26} color={c.onPrimary} />
+          <Ionicons name="create-outline" size={26} color={editIcon} />
         </View>
       )}
       renderRightActions={() => (
@@ -98,14 +103,22 @@ export default function ItemCard({
             <Text style={{ color: c.sub }}>
               {item.quantity} {item.unit}
             </Text>
-            <Text style={{ color: c.sub }}>
-              <Ionicons name="pricetags-outline" />{" "}
-              {item.categoryName ? `${item.categoryName}` : ""}
-            </Text>
-            <Text style={{ color: c.sub }}>
-              <Ionicons name="storefront-outline" />
-              {item.storeName ? ` ${item.storeName}` : ""}
-            </Text>
+            {item.categoryName ? (
+              <Text style={{ color: c.sub }}>
+                <Ionicons name="pricetags-outline" /> {`${item.categoryName}`}
+              </Text>
+            ) : (
+              <></>
+            )}
+
+            {item.storeName ? (
+              <Text style={{ color: c.sub }}>
+                <Ionicons name="storefront-outline" />
+                {` ${item.storeName}`}
+              </Text>
+            ) : (
+              <></>
+            )}
           </View>
 
           <View style={{ gap: 10, flexDirection: "row" }}>
@@ -128,20 +141,9 @@ export default function ItemCard({
             accessibilityLabel="Toggle shopping list"
           >
             <Ionicons
-              name={item.toBuy ? "cart" : "cart-outline"}
+              name={item.toBuy ? "basket" : "basket-outline"}
               size={24}
-              color={item.toBuy ? c.addedCart : c.sub}
-            />
-          </Pressable>
-          <Pressable
-            onPress={onBought}
-            hitSlop={8}
-            accessibilityLabel="Mark as bought"
-          >
-            <Ionicons
-              name="checkmark-done-circle-outline"
-              size={24}
-              color={c.sub}
+              color={item.toBuy ? accent : c.sub}
             />
           </Pressable>
         </View>

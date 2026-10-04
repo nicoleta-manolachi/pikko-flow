@@ -1,155 +1,202 @@
 import EmptyState from "@/components/EmptyState";
-import PriorityBadge from "@/components/PriorityBadge";
-import { useItems } from "@/db/hooks";
-import { markBought, setToBuy, type ItemRow } from "@/db/queries";
-import { applyView } from "@/utils/listing";
-import { isRunningLow } from "@/utils/runout";
+import { useItems, useStores } from "@/db/hooks";
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo } from "react";
+import { useRouter } from "expo-router";
+import { useMemo, useRef } from "react";
 import {
   Alert,
+  FlatList,
+  Image,
   Pressable,
-  SectionList,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import ReanimatedSwipeable, {
+  type SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
+import { deleteStore } from "@/db/queries";
+import { deleteImageFile } from "@/utils/images";
+import type { Store } from "@/db/schema";
+
+function StoreRow({
+  store,
+  count,
+  onPress,
+  onDelete,
+}: {
+  store: Store;
+  count: number;
+  onPress: () => void;
+  onDelete: () => void;
+}) {
+  const c = useColors();
+  const ref = useRef<SwipeableMethods>(null);
+
+  function confirmDelete() {
+    Alert.alert(
+      "Delete store?",
+      count > 0
+        ? `“${store.name}” will be removed. ${count} item${count > 1 ? "s" : ""} will become unassigned, but won't be deleted.`
+        : `“${store.name}” will be removed.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: onDelete },
+      ],
+    );
+  }
+
+  return (
+    <ReanimatedSwipeable
+      ref={ref}
+      overshootLeft={false}
+      overshootRight={false}
+      onSwipeableOpen={(dir) => {
+        ref.current?.close();
+        if (dir === "right") onPress();
+        else confirmDelete();
+      }}
+      renderLeftActions={() => (
+        <View
+          style={[
+            s.action,
+            { backgroundColor: c.beetroot700, alignItems: "flex-start" },
+          ]}
+        >
+          <Ionicons name="create-outline" size={26} color={c.beetroot200} />
+        </View>
+      )}
+      renderRightActions={() => (
+        <View
+          style={[
+            s.action,
+            { backgroundColor: c.danger, alignItems: "flex-end" },
+          ]}
+        >
+          <Ionicons name="trash" size={26} color="#fff" />
+        </View>
+      )}
+    >
+      <View style={[s.row, { backgroundColor: c.card, borderColor: c.border }]}>
+        {store.imageUri ? (
+          <Image source={{ uri: store.imageUri }} style={s.thumb} />
+        ) : (
+          <View style={[s.thumb, s.placeholder, { backgroundColor: c.chip }]}>
+            <Ionicons name="storefront-outline" size={24} color={c.sub} />
+          </View>
+        )}
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text
+            style={{ color: c.text, fontSize: 16, fontWeight: "600" }}
+            numberOfLines={1}
+          >
+            {store.name}
+          </Text>
+          {store.address ? (
+            <Text style={{ color: c.sub, fontSize: 13 }} numberOfLines={1}>
+              <Ionicons name="location-outline" size={12} /> {store.address}
+            </Text>
+          ) : null}
+          <Text style={{ color: c.sub, fontSize: 12 }}>
+            {count} item{count === 1 ? "" : "s"}
+          </Text>
+        </View>
+      </View>
+    </ReanimatedSwipeable>
+  );
+}
 
 export default function Stores() {
-  const c = useColors();
+  const router = useRouter();
+  const stores = useStores();
   const { items } = useItems();
 
-  // Grouped by store ("Any store" last), so you can walk through one shop at a time.
-  const sections = useMemo(() => {
-    const sorted = applyView(
-      items.filter((i) => i.toBuy),
-      {
-        search: "",
-        categoryId: null,
-        storeId: null,
-        priority: null,
-        sort: "store",
-      },
-    );
-    const groups = new Map<string, ItemRow[]>();
-    for (const it of sorted) {
-      const key = it.storeName ?? "Any store";
-      groups.set(key, [...(groups.get(key) ?? []), it]);
+  const itemCount = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const it of items) {
+      if (it.storeId != null)
+        counts.set(it.storeId, (counts.get(it.storeId) ?? 0) + 1);
     }
-    return [...groups].map(([title, data]) => ({ title, data }));
+    return counts;
   }, [items]);
 
-  const low = useMemo(
-    () => items.filter((i) => !i.toBuy && isRunningLow(i)),
-    [items],
-  );
   const guard = (fn: () => Promise<unknown>) =>
     fn().catch(() => Alert.alert("Something went wrong", "Please try again."));
 
+  async function handleDelete(store: Store) {
+    await guard(() => deleteStore(store.id));
+    deleteImageFile(store.imageUri);
+  }
+
+  const c = useColors();
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(i) => String(i.id)}
-      stickySectionHeadersEnabled={false}
-      contentContainerStyle={{ padding: 12, gap: 8, flexGrow: 1 }}
-      ListHeaderComponent={
-        low.length > 0 ? (
-          <Pressable
+    <View style={{ flex: 1 }}>
+      <FlatList
+        data={stores}
+        keyExtractor={(s) => String(s.id)}
+        contentContainerStyle={{ padding: 12, gap: 10, flexGrow: 1 }}
+        renderItem={({ item: store }) => (
+          <StoreRow
+            store={store}
+            count={itemCount.get(store.id) ?? 0}
             onPress={() =>
-              guard(() => Promise.all(low.map((i) => setToBuy(i.id, true))))
+              router.push({
+                pathname: "/store",
+                params: { id: String(store.id) },
+              })
             }
-            style={[
-              s.suggest,
-              { borderColor: c.warn, backgroundColor: c.card },
-            ]}
-          >
-            <Ionicons name="alert-circle" size={20} color={c.warn} />
-            <Text style={{ color: c.text, flex: 1 }}>
-              {low.length} item{low.length > 1 ? "s" : ""} running low. Tap to
-              add to the list.
-            </Text>
-          </Pressable>
-        ) : null
-      }
-      renderSectionHeader={({ section }) => (
-        <View style={s.header}>
-          <Ionicons name="storefront-outline" size={16} color={c.sub} />
-          <Text
-            style={{
-              color: c.sub,
-              fontWeight: "700",
-              textTransform: "uppercase",
-              fontSize: 12,
-            }}
-          >
-            {section.title} · {section.data.length}
-          </Text>
-        </View>
-      )}
-      renderItem={({ item }) => (
-        <View
-          style={[s.row, { backgroundColor: c.card, borderColor: c.border }]}
-        >
-          <Pressable
-            onPress={() => guard(() => markBought(item.id))}
-            hitSlop={8}
-            accessibilityLabel={`Mark ${item.name} as bought`}
-          >
-            <Ionicons name="square-outline" size={28} color={c.primary} />
-          </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: c.text, fontSize: 16, fontWeight: "600" }}>
-              {item.name}
-            </Text>
-            <Text style={{ color: c.sub }}>
-              {item.quantity} {item.unit}
-              {item.categoryName ? `  ·  ${item.categoryName}` : ""}
-            </Text>
-          </View>
-          <PriorityBadge priority={item.priority} />
-          <Pressable
-            onPress={() => guard(() => setToBuy(item.id, false))}
-            hitSlop={8}
-            accessibilityLabel="Remove from list"
-          >
-            <Ionicons name="close" size={22} color={c.sub} />
-          </Pressable>
-        </View>
-      )}
-      ListEmptyComponent={
-        <EmptyState
-          icon="cart-outline"
-          title="Nothing to buy"
-          subtitle="Tap the cart icon on a pantry item to add it here."
-        />
-      }
-    />
+            onDelete={() => handleDelete(store)}
+          />
+        )}
+        ListEmptyComponent={
+          <EmptyState
+            icon="storefront-outline"
+            title="No stores yet"
+            subtitle="Add the places you usually shop, so you can filter and group your list by store."
+            actionLabel="Add your first store"
+            onAction={() => router.push("/store")}
+          />
+        }
+      />
+
+      <Pressable
+        onPress={() => router.push("/store")}
+        style={[s.fab, { backgroundColor: c.beetroot }]}
+        accessibilityLabel="Add store"
+      >
+        <Ionicons name="add" size={30} color={c.beetroot200} />
+      </Pressable>
+    </View>
   );
 }
+
 const s = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 14,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 14,
     borderWidth: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 12,
-    marginBottom: 2,
+  thumb: { width: 56, height: 56, borderRadius: 10 },
+  placeholder: { alignItems: "center", justifyContent: "center" },
+  action: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    borderRadius: 14,
   },
-  suggest: {
-    flexDirection: "row",
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: "center",
-    gap: 10,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    marginBottom: 8,
+    justifyContent: "center",
+    elevation: 6,
   },
 });

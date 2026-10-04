@@ -3,7 +3,7 @@ import type { Priority } from '@/db/schema';
 import type { SortKey } from '@/store/uiStore';
 import { runOutAt } from './runout';
 
-const RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
+const RANK: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };
 const cmp = (a: number | string, b: number | string) => (a < b ? -1 : a > b ? 1 : 0);
 
 export type View = { search: string; categoryId: number | null; storeId: number | null; priority: Priority | null; sort: SortKey };

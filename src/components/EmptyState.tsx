@@ -12,8 +12,8 @@ export default function EmptyState({ icon, title, subtitle, actionLabel, onActio
       <Text style={[s.title, { color: c.text }]}>{title}</Text>
       <Text style={[s.sub, { color: c.sub }]}>{subtitle}</Text>
       {actionLabel && onAction && (
-        <Pressable onPress={onAction} style={[s.btn, { backgroundColor: c.primary }]}>
-          <Text style={{ color: c.onPrimary, fontWeight: '600' }}>{actionLabel}</Text>
+        <Pressable onPress={onAction} style={[s.btn, { backgroundColor: c.beetroot }]}>
+          <Text style={{ color: c.beetroot200, fontWeight: '600' }}>{actionLabel}</Text>
         </Pressable>
       )}
     </View>

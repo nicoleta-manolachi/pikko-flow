@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "44844b79-ceb8-4799-9d3d-a068da053f83",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "06afa3a4-fbb9-4d13-bfc8-ae8574f30de9",
+  "prevId": "9ff34d3b-51f4-4e0d-bcc1-f573f2638ea3",
   "tables": {
     "categories": {
       "name": "categories",
@@ -19,6 +19,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -112,6 +119,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "checked_at": {
+          "name": "checked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "to_buy": {
           "name": "to_buy",
           "type": "integer",
@@ -190,6 +204,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "image_uri": {
+          "name": "image_uri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },

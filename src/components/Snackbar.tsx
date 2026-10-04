@@ -34,7 +34,7 @@ export default function Snackbar({
         {message}
       </Text>
       <Pressable onPress={onAction} hitSlop={10}>
-        <Text style={{ color: c.primary, fontWeight: "700" }}>
+        <Text style={{ color: c.beetroot, fontWeight: "700" }}>
           {actionLabel}
         </Text>
       </Pressable>

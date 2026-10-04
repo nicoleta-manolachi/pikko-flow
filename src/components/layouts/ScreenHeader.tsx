@@ -28,7 +28,7 @@ export default function ScreenHeader({
 }: Props) {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const fg = textColor ?? c.onPrimary;
+  const fg = textColor ?? c.beetroot200;
 
   return (
     <View
