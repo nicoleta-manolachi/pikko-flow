@@ -197,8 +197,8 @@ export type Colors = typeof light;
 export const useColors = (): Colors =>
   useColorScheme() === "dark" ? dark : light;
 
-export const priorityColor: Record<string, string> = {
-  low: "#4C9F70",
-  medium: "#E0A100",
-  high: "#D64545",
+export const priorityColor: Record<Priority, string> = {
+  Low: "#4C9F70",
+  Medium: "#E0A100",
+  High: "#D64545",
 };
