@@ -7,6 +7,8 @@ import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ScreenHeader, { greeting } from "@/components/layouts/ScreenHeader";
 import type { Colors } from "@/utils/theme";
+import { useSharedValue } from "react-native-reanimated";
+import { HeaderScrollContext } from "@/context/headerScroll";
 
 const BAR_HEIGHT = 72;
 const SIDE_MARGIN = 16; // increase for a narrower bar
@@ -127,40 +129,43 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 export default function TabsLayout() {
   const c = useColors();
   const insets = useSafeAreaInsets();
+  const headerScrollY = useSharedValue(0); // one shared value, read by ScreenHeader, written by each screen's list
 
   return (
-    <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} />}
-      screenOptions={{
-        tabBarStyle: { position: "absolute" }, // don't reserve layout space for the bar
-        sceneStyle: {
-          backgroundColor: c.bg,
-          paddingBottom: BAR_HEIGHT + insets.bottom + BOTTOM_MARGIN,
-        },
-        headerStyle: { backgroundColor: c.card },
-        headerTintColor: c.text,
-        headerTitleAlign: "center",
-        headerShadowVisible: true,
-        headerShown: true,
-        header: ({ route, options }) => {
-          const { bg, text } = findHeaderColors(c, route.name);
-          return (
-            <ScreenHeader
-              title={
-                route.name === "index"
-                  ? greeting()
-                  : typeof options.title === "string"
-                    ? options.title
-                    : route.name
-              }
-              subtitle={SUBTITLES[route.name]}
-              backgroundColor={bg}
-              textColor={text}
-            />
-          );
-        },
-      }}
-    >
+    <HeaderScrollContext.Provider value={headerScrollY}>
+      <Tabs
+        tabBar={(props) => <FloatingTabBar {...props} />}
+        screenOptions={{
+          tabBarStyle: { position: "absolute" },
+          sceneStyle: {
+            backgroundColor: c.bg,
+            paddingBottom: BAR_HEIGHT + insets.bottom + BOTTOM_MARGIN,
+          },
+          headerStyle: { backgroundColor: c.card },
+          headerTintColor: c.text,
+          headerTitleAlign: "center",
+          headerShadowVisible: true,
+          headerShown: true,
+          header: ({ route, options }) => {
+            const { bg, text } = findHeaderColors(c, route.name);
+            return (
+              <ScreenHeader
+                title={
+                  route.name === "index"
+                    ? greeting()
+                    : typeof options.title === "string"
+                      ? options.title
+                      : route.name
+                }
+                subtitle={SUBTITLES[route.name]}
+                backgroundColor={bg}
+                textColor={text}
+                scrollY={headerScrollY}
+              />
+            );
+          },
+        }}
+      >
       <Tabs.Screen
         name="index"
         options={{
@@ -206,7 +211,8 @@ export default function TabsLayout() {
           ),
         }}
       />
-    </Tabs>
+      </Tabs>
+    </HeaderScrollContext.Provider>
   );
 }
 

@@ -93,12 +93,14 @@ const light = {
   farmGreen200: "#F1FCF8",
 
   bg: "#F7F7F7",
+  offwhite: "#F7F7F7",
   card: "#F7F7F7",
   text: "#19191FFF",
   sub: "#939C96",
   border: "#DEE1E6",
   danger: "#F06A6A",
   warn: "#F0A830",
+  edit: "#8FA8D8",
   chip: "#636AE817",
 };
 const dark: typeof light = {
@@ -184,12 +186,14 @@ const dark: typeof light = {
   farmGreen200: "#F1FCF8",
 
   bg: "#F7F7F7",
+  offwhite: "#F7F7F7",
   card: "#F7F7F7",
   text: "#19191FFF",
   sub: "#939C96",
   border: "#DEE1E6",
   danger: "#F06A6A",
   warn: "#F0A830",
+  edit: "#8FA8D8",
   chip: "#636AE817",
 };
 

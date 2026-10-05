@@ -29,6 +29,20 @@
       "when": 1791089278484,
       "tag": "0003_true_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791127077835,
+      "tag": "0004_sticky_kabuki",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791147536199,
+      "tag": "0005_flaky_loners",
+      "breakpoints": true
     }
   ]
 }

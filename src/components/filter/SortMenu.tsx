@@ -24,7 +24,7 @@ export default function SortMenu({ value, onChange }: { value: SortKey; onChange
       </Pressable>
       <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={s.backdrop} onPress={() => setOpen(false)}>
-          <View style={[s.sheet, { backgroundColor: c.card }]}>
+          <View style={[s.sheet, { backgroundColor: c.offwhite }]}>
             <Text style={[s.title, { color: c.sub }]}>Sort by</Text>
             {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
               <Pressable key={k} style={s.row} onPress={() => { onChange(k); setOpen(false); }}>

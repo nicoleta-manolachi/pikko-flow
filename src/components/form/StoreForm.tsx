@@ -5,6 +5,8 @@ import { useState } from "react";
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -104,56 +106,66 @@ export default function StoreForm({ initial, submitLabel, onSubmit }: Props) {
   ];
 
   return (
-    <ScrollView
-      contentContainerStyle={s.wrap}
-      keyboardShouldPersistTaps="handled"
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <Pressable
-        onPress={choosePhoto}
-        style={[s.photo, { backgroundColor: c.chip, borderColor: c.border }]}
+      <ScrollView
+        contentContainerStyle={s.wrap}
+        keyboardShouldPersistTaps="handled"
       >
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={{ alignItems: "center" }}>
-            <Ionicons name="camera-outline" size={32} color={c.sub} />
-            <Text style={{ color: c.sub }}>Add photo</Text>
-          </View>
+        <Pressable
+          onPress={choosePhoto}
+          style={[s.photo, { backgroundColor: c.chip, borderColor: c.border }]}
+        >
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={{ alignItems: "center" }}>
+              <Ionicons name="camera-outline" size={32} color={c.sub} />
+              <Text style={{ color: c.sub }}>Add photo</Text>
+            </View>
+          )}
+        </Pressable>
+
+        <Text style={[s.label, { color: c.sub }]}>Name *</Text>
+        <TextInput
+          style={input}
+          value={name}
+          onChangeText={setName}
+          placeholder="e.g. Lidl"
+          placeholderTextColor={c.sub}
+        />
+        {error && (
+          <Text style={{ color: c.danger, marginTop: 4 }}>{error}</Text>
         )}
-      </Pressable>
 
-      <Text style={[s.label, { color: c.sub }]}>Name *</Text>
-      <TextInput
-        style={input}
-        value={name}
-        onChangeText={setName}
-        placeholder="e.g. Lidl"
-        placeholderTextColor={c.sub}
-      />
-      {error && <Text style={{ color: c.danger, marginTop: 4 }}>{error}</Text>}
+        <Text style={[s.label, { color: c.sub }]}>Address</Text>
+        <TextInput
+          style={input}
+          value={address}
+          onChangeText={setAddress}
+          placeholder="Strada Ștefan cel Mare, 12"
+          placeholderTextColor={c.sub}
+        />
 
-      <Text style={[s.label, { color: c.sub }]}>Address</Text>
-      <TextInput
-        style={input}
-        value={address}
-        onChangeText={setAddress}
-        placeholder="Strada Ștefan cel Mare, 12"
-        placeholderTextColor={c.sub}
-      />
-
-      <Pressable
-        disabled={saving}
-        onPress={submit}
-        style={[
-          s.save,
-          { backgroundColor: c.beetroot, opacity: saving ? 0.6 : 1 },
-        ]}
-      >
-        <Text style={{ color: c.beetroot200, fontWeight: "700", fontSize: 16 }}>
-          {submitLabel}
-        </Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable
+          disabled={saving}
+          onPress={submit}
+          style={[
+            s.save,
+            { backgroundColor: c.beetroot, opacity: saving ? 0.6 : 1 },
+          ]}
+        >
+          <Text
+            style={{ color: c.beetroot200, fontWeight: "700", fontSize: 16 }}
+          >
+            {submitLabel}
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -161,8 +173,8 @@ const s = StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 48 },
   photo: {
     width: "100%",
-    height: 'auto',
-    aspectRatio: 4/3,
+    height: "auto",
+    aspectRatio: 4 / 3,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",

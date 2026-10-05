@@ -7,24 +7,26 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import PriorityBadge from "../PriorityBadge";
+import PriorityBadge from "./PriorityBadge";
 
 type Props = {
   item: ItemRow;
   checked: boolean;
+  held: boolean;
   onPress: () => void;
   onToggleChecked: () => void;
+  onToggleHold: () => void;
   onRemoveFromList: () => void;
-  onDelete: () => void;
 };
 
 export default function ItemCardShoppingList({
   item,
   checked,
+  held,
   onPress,
   onToggleChecked,
+  onToggleHold,
   onRemoveFromList,
-  onDelete,
 }: Props) {
   const c = useColors();
   const ref = useRef<SwipeableMethods>(null);
@@ -33,16 +35,6 @@ export default function ItemCardShoppingList({
   const overdue = left != null && left < 0;
   const alertColor = overdue ? c.danger : c.warn;
 
-  function confirmDelete() {
-    Alert.alert(
-      "Delete item?",
-      `“${item.name}” will be removed from your pantry.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: onDelete },
-      ],
-    );
-  }
   function confirmRemoveFromList() {
     Alert.alert(
       "Remove from shopping list?",
@@ -61,38 +53,44 @@ export default function ItemCardShoppingList({
       overshootRight={false}
       onSwipeableOpen={(dir) => {
         ref.current?.close();
-        if (dir === "right") onPress();
-        else confirmDelete();
+        if (dir === "right") confirmRemoveFromList();
+        else onToggleHold();
       }}
       renderLeftActions={() => (
         <View
           style={[
             s.action,
-            { backgroundColor: c.beetroot700, alignItems: "flex-start" },
+            { backgroundColor: c.danger, alignItems: "flex-start" },
           ]}
         >
-          <Ionicons name="create-outline" size={26} color={c.beetroot200} />
+          <Ionicons name="basket-outline" size={26} color="#fff" />
         </View>
       )}
       renderRightActions={() => (
         <View
           style={[
             s.action,
-            { backgroundColor: c.danger, alignItems: "flex-end" },
+            { backgroundColor: c.warn, alignItems: "flex-end" },
           ]}
         >
-          <Ionicons name="trash" size={26} color="#fff" />
+          <Ionicons
+            name={held ? "play-circle" : "pause-circle"}
+            size={26}
+            color="#fff"
+          />
         </View>
       )}
     >
-      <View
+      <Pressable
+        onPress={onPress}
         style={[
           s.card,
           {
             backgroundColor: c.card,
-            borderColor: low && !checked ? alertColor : c.border,
-            borderWidth: low && !checked ? 1.5 : 1,
-            opacity: checked ? 0.55 : 1,
+            borderColor: held ? c.sub : low && !checked ? alertColor : c.border,
+            borderWidth: held ? 1.5 : low && !checked ? 1.5 : 1,
+            borderStyle: held ? "dashed" : "solid",
+            opacity: checked || held ? 0.6 : 1,
           },
         ]}
       >
@@ -103,19 +101,28 @@ export default function ItemCardShoppingList({
             <Ionicons name="basket-outline" size={26} color={c.sub} />
           </View>
         )}
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text
-            style={[
-              s.name,
-              {
-                color: c.text,
-                textDecorationLine: checked ? "line-through" : "none",
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {item.name}
-          </Text>
+        <View style={{ flex: 1, gap: 4, overflow: "hidden" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text
+              style={[
+                s.name,
+                {
+                  color: c.text,
+                  textDecorationLine: checked ? "line-through" : "none",
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {item.name}
+            </Text>
+            {held && (
+              <View style={[s.holdBadge, { backgroundColor: c.chip }]}>
+                <Text style={{ color: c.sub, fontSize: 11, fontWeight: "700" }}>
+                  ON HOLD
+                </Text>
+              </View>
+            )}
+          </View>
           <View style={{ gap: 10, flexDirection: "row" }}>
             <Text style={{ color: c.sub }}>
               {item.quantity} {item.unit}
@@ -125,14 +132,18 @@ export default function ItemCardShoppingList({
                 <Ionicons name="pricetags-outline" /> {item.categoryName}
               </Text>
             ) : null}
-            {item.storeName ? (
+            {item.stores.length > 0 ? (
               <Text style={{ color: c.sub }}>
-                <Ionicons name="storefront-outline" /> {item.storeName}
+                <Ionicons name="storefront-outline" />{" "}
+                {item.stores
+                  .slice(0, 2)
+                  .map((s) => s.name)
+                  .join(", ")}
               </Text>
             ) : null}
           </View>
 
-          {!checked && (
+          {!checked && !held && (
             <View style={{ gap: 10, flexDirection: "row" }}>
               <View style={s.badgeRow}>
                 <PriorityBadge priority={item.priority} />
@@ -152,7 +163,7 @@ export default function ItemCardShoppingList({
             </View>
           )}
         </View>
-        <View style={{ gap: 10 }}>
+        <View style={{ gap: 14 }}>
           <Pressable
             onPress={onToggleChecked}
             hitSlop={8}
@@ -175,10 +186,10 @@ export default function ItemCardShoppingList({
             hitSlop={8}
             accessibilityLabel="Remove from shopping list"
           >
-            <Ionicons name="remove-circle-outline" size={24} color={c.sub} />
+            <Ionicons name="basket" size={24} color={c.farmGreen} />
           </Pressable>
         </View>
-      </View>
+      </Pressable>
     </ReanimatedSwipeable>
   );
 }
@@ -193,6 +204,7 @@ const s = StyleSheet.create({
   thumb: { width: 56, height: 56, borderRadius: 10 },
   placeholder: { alignItems: "center", justifyContent: "center" },
   name: { fontSize: 16, fontWeight: "600" },
+  holdBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   badgeRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   action: {
     flex: 1,

@@ -1,4 +1,4 @@
-import BottomSheet from "@/components/BottomSheet";
+import BottomSheet from "@/components/layouts/BottomSheet";
 import { CATEGORY_ICON_GROUPS } from "@/utils/categoryIcons";
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";

@@ -1,0 +1,1 @@
+ALTER TABLE `items` ADD `on_hold` integer DEFAULT false NOT NULL;

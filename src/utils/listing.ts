@@ -14,7 +14,7 @@ export function applyView(items: ItemRow[], v: View): ItemRow[] {
     (i) =>
       (!q || i.name.toLowerCase().includes(q)) &&
       (v.categoryId == null || i.categoryId === v.categoryId) &&
-      (v.storeId == null || i.storeId === v.storeId) &&
+      (v.storeId == null || i.stores.some((s) => s.id === v.storeId)) &&
       (!v.priority || i.priority === v.priority),
   );
   const byName = (a: ItemRow, b: ItemRow) => a.name.localeCompare(b.name);
@@ -22,9 +22,9 @@ export function applyView(items: ItemRow[], v: View): ItemRow[] {
     name: byName,
     priority: (a, b) => cmp(RANK[a.priority], RANK[b.priority]) || byName(a, b),
     category: (a, b) => (a.categoryName ?? '~').localeCompare(b.categoryName ?? '~') || byName(a, b),
-    store: (a, b) => (a.storeName ?? '~').localeCompare(b.storeName ?? '~') || byName(a, b),
     added: (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     runout: (a, b) => cmp(runOutAt(a) ?? Infinity, runOutAt(b) ?? Infinity) || byName(a, b),
+    store: (a, b) => (a.stores[0]?.name ?? '~').localeCompare(b.stores[0]?.name ?? '~') || byName(a, b),
   };
   return out.sort(sorters[v.sort]);
 }

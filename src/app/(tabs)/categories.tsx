@@ -1,5 +1,5 @@
-import CategoryFormModal from "@/components/CategoryFormModal";
-import EmptyState from "@/components/EmptyState";
+import CategoryFormModal from "@/components/form/CategoryFormModal";
+import EmptyState from "@/components/layouts/EmptyState";
 import { useCategories, useItems } from "@/db/hooks";
 import { createCategory, deleteCategory, updateCategory } from "@/db/queries";
 import type { Category } from "@/db/schema";
@@ -25,7 +25,7 @@ export default function Categories() {
   const [editing, setEditing] = useState<Category | null>(null);
 
   const accentColor = c.pumpkin;
-  const accentTint = c.pumpkin500;
+  const accentTint = c.offwhite;
 
   const itemCount = useMemo(() => {
     const counts = new Map<number, number>();
@@ -109,6 +109,8 @@ export default function Categories() {
             title="No categories yet"
             subtitle="Add categories like Dairy or Snacks to organize your pantry."
             actionLabel="Add your first category"
+            accentColor={accentColor}
+            accentTint={accentTint}
             onAction={() => setAddOpen(true)}
           />
         }
@@ -128,8 +130,8 @@ export default function Categories() {
         onSubmit={(v) => createCategory(v)}
         title="New category"
         submitLabel="Add category"
-        accentColor={c.card}
-        accentTint={c.pumpkin}
+        accentColor={accentColor}
+        accentTint={accentTint}
       />
 
       <CategoryFormModal

@@ -6,7 +6,7 @@ import {
   type Priority,
   type Unit,
 } from "@/db/schema";
-import { useColors } from "@/utils/theme";
+import { useColors, type Colors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
@@ -23,7 +23,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Chip from "../Chip";
+import Chip from "../filter/Chip";
 
 export type ItemFormValues = {
   name: string;
@@ -32,7 +32,7 @@ export type ItemFormValues = {
   unit: Unit;
   priority: Priority;
   categoryId: number | null;
-  storeId: number | null;
+  storeIds: number[];
   avgConsumeDays: number | null;
   lastPurchasedAt: Date | null;
   toBuy: boolean;
@@ -41,11 +41,47 @@ export type ItemFormValues = {
 
 type Props = {
   initial?: Item;
+  initialStoreIds?: number[]; // fetched separately by the caller, since Item no longer carries storeId
   submitLabel: string;
   onSubmit: (v: ItemFormValues) => Promise<void> | void;
 };
 
-export default function ItemForm({ initial, submitLabel, onSubmit }: Props) {
+// Moved outside ItemForm: a stable component reference across re-renders,
+// so React doesn't remount its children (and their focus/keyboard) on every keystroke.
+function Section({
+  icon,
+  label,
+  c,
+  children,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  c: Colors;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={s.section}>
+      <View style={s.sectionHeader}>
+        <Ionicons name={icon} size={15} color={c.sub} />
+        <Text style={[s.sectionLabel, { color: c.sub }]}>{label}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function Err({ msg, c }: { msg?: string; c: Colors }) {
+  return msg ? (
+    <Text style={{ color: c.danger, marginTop: 6, fontSize: 13 }}>{msg}</Text>
+  ) : null;
+}
+
+export default function ItemForm({
+  initial,
+  submitLabel,
+  initialStoreIds,
+  onSubmit,
+}: Props) {
   const c = useColors();
   const router = useRouter();
   const categories = useCategories();
@@ -63,9 +99,14 @@ export default function ItemForm({ initial, submitLabel, onSubmit }: Props) {
   const [categoryId, setCategoryId] = useState<number | null>(
     initial?.categoryId ?? null,
   );
-  const [storeId, setStoreId] = useState<number | null>(
-    initial?.storeId ?? null,
-  );
+
+  const [storeIds, setStoreIds] = useState<number[]>(initialStoreIds ?? []);
+
+  function toggleStore(id: number) {
+    setStoreIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
   const [days, setDays] = useState(
     initial?.avgConsumeDays ? String(initial.avgConsumeDays) : "",
   );
@@ -154,7 +195,7 @@ export default function ItemForm({ initial, submitLabel, onSubmit }: Props) {
         unit,
         priority,
         categoryId,
-        storeId,
+        storeIds,
         avgConsumeDays: d,
         lastPurchasedAt: lastPurchased,
         toBuy,
@@ -168,236 +209,205 @@ export default function ItemForm({ initial, submitLabel, onSubmit }: Props) {
 
   const input = [
     s.input,
-    { backgroundColor: c.card, borderColor: c.border, color: c.text },
+    { backgroundColor: c.offwhite, borderColor: c.border, color: c.text },
   ];
 
-  function Section({
-    icon,
-    label,
-    children,
-  }: {
-    icon: keyof typeof Ionicons.glyphMap;
-    label: string;
-    children: React.ReactNode;
-  }) {
-    return (
-      <View style={s.section}>
-        <View style={s.sectionHeader}>
-          <Ionicons name={icon} size={15} color={c.sub} />
-          <Text style={[s.sectionLabel, { color: c.sub }]}>{label}</Text>
-        </View>
-        {children}
-      </View>
-    );
-  }
-
-  function Err({ msg }: { msg?: string }) {
-    return msg ? (
-      <Text style={{ color: c.danger, marginTop: 6, fontSize: 13 }}>{msg}</Text>
-    ) : null;
-  }
-
   return (
-    <ScrollView
-      contentContainerStyle={s.wrap}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Pressable
-        onPress={choosePhoto}
-        style={[s.photo, { backgroundColor: c.chip, borderColor: c.border }]}
-      >
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={{ alignItems: "center" }}>
-            <Ionicons name="camera-outline" size={28} color={c.sub} />
-            <Text style={{ color: c.sub, fontSize: 13, marginTop: 4 }}>
-              Add photo
-            </Text>
-          </View>
-        )}
-      </Pressable>
-
-      {/* Basics */}
-      <Section icon="pricetag-outline" label="Item">
-        <TextInput
-          style={input}
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. Milk"
-          placeholderTextColor={c.sub}
-        />
-        <Err msg={errors.name} />
-      </Section>
-
-      <Section icon="scale-outline" label="Quantity">
-        <TextInput
-          style={input}
-          value={quantity}
-          onChangeText={setQuantity}
-          keyboardType="decimal-pad"
-        />
-        <Err msg={errors.quantity} />
-        <View style={s.row}>
-          {UNITS.map((u) => (
-            <Chip
-              key={u}
-              label={u}
-              selected={u === unit}
-              onPress={() => setUnit(u)}
-              activeBg={c.farmGreen}
-              activeText={c.card}
-            />
-          ))}
-        </View>
-      </Section>
-
-      <Section icon="flag-outline" label="Priority">
-        <View style={s.row}>
-          {PRIORITIES.map((p) => (
-            <Chip
-              key={p}
-              label={p}
-              selected={p === priority}
-              onPress={() => setPriority(p)}
-              activeBg={c.farmGreen}
-              activeText={c.card}
-            />
-          ))}
-        </View>
-      </Section>
-
-      {/* Organization */}
-      <Section icon="grid-outline" label="Category">
-        <View style={s.row}>
-          <Chip
-            label="None"
-            selected={categoryId == null}
-            onPress={() => setCategoryId(null)}
-            activeBg={c.farmGreen}
-            activeText={c.card}
-          />
-          {categories.map((cat) => (
-            <Chip
-              key={cat.id}
-              label={cat.name}
-              selected={cat.id === categoryId}
-              onPress={() => setCategoryId(cat.id)}
-              activeBg={c.farmGreen}
-              activeText={c.card}
-            />
-          ))}
-        </View>
+    <View style={[s.wrap, { flex: 1 }]}>
+      <ScrollView keyboardShouldPersistTaps="handled">
         <Pressable
-          onPress={() => router.push("/categories")}
-          style={s.manageLink}
+          onPress={choosePhoto}
+          style={[s.photo, { backgroundColor: c.chip, borderColor: c.border }]}
         >
-          <Ionicons name="add-circle-outline" size={15} color={c.farmGreen} />
-          <Text style={{ color: c.farmGreen, fontSize: 13, fontWeight: "600" }}>
-            Manage categories
-          </Text>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={{ alignItems: "center" }}>
+              <Ionicons name="camera-outline" size={28} color={c.sub} />
+              <Text style={{ color: c.sub, fontSize: 13, marginTop: 4 }}>
+                Add photo
+              </Text>
+            </View>
+          )}
         </Pressable>
-      </Section>
 
-      <Section icon="storefront-outline" label="Store">
-        <View style={s.row}>
-          <Chip
-            label="Any"
-            selected={storeId == null}
-            onPress={() => setStoreId(null)}
-            activeBg={c.farmGreen}
-            activeText={c.card}
+        <Section icon="pricetag-outline" label="Item" c={c}>
+          <TextInput
+            style={input}
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Milk"
+            placeholderTextColor={c.sub}
           />
-          {stores.map((st) => (
+          <Err msg={errors.name} c={c} />
+        </Section>
+
+        <Section icon="scale-outline" label="Quantity" c={c}>
+          <TextInput
+            style={input}
+            value={quantity}
+            onChangeText={setQuantity}
+            keyboardType="decimal-pad"
+          />
+          <Err msg={errors.quantity} c={c} />
+          <View style={s.row}>
+            {UNITS.map((u) => (
+              <Chip
+                key={u}
+                label={u}
+                selected={u === unit}
+                onPress={() => setUnit(u)}
+                activeBg={c.farmGreen}
+                activeText={c.offwhite}
+              />
+            ))}
+          </View>
+        </Section>
+
+        <Section icon="flag-outline" label="Priority" c={c}>
+          <View style={s.row}>
+            {PRIORITIES.map((p) => (
+              <Chip
+                key={p}
+                label={p}
+                selected={p === priority}
+                onPress={() => setPriority(p)}
+                activeBg={c.farmGreen}
+                activeText={c.offwhite}
+              />
+            ))}
+          </View>
+        </Section>
+
+        <Section icon="grid-outline" label="Category" c={c}>
+          <View style={s.row}>
             <Chip
-              key={st.id}
-              label={st.name}
-              selected={st.id === storeId}
-              onPress={() => setStoreId(st.id)}
+              label="None"
+              selected={categoryId == null}
+              onPress={() => setCategoryId(null)}
               activeBg={c.farmGreen}
-              activeText={c.card}
+              activeText={c.offwhite}
             />
-          ))}
-        </View>
-        <Pressable onPress={() => router.push("/stores")} style={s.manageLink}>
-          <Ionicons name="add-circle-outline" size={15} color={c.farmGreen} />
-          <Text style={{ color: c.farmGreen, fontSize: 13, fontWeight: "600" }}>
-            Manage stores
-          </Text>
-        </Pressable>
-      </Section>
-
-      {/* Consumption tracking */}
-      <Section icon="hourglass-outline" label="Usually lasts (days)">
-        <TextInput
-          style={input}
-          value={days}
-          onChangeText={setDays}
-          keyboardType="number-pad"
-          placeholder="e.g. 7"
-          placeholderTextColor={c.sub}
-        />
-        <Err msg={errors.days} />
-      </Section>
-
-      <Section icon="calendar-outline" label="Last purchased">
-        <View style={s.row}>
+            {categories.map((cat) => (
+              <Chip
+                key={cat.id}
+                label={cat.name}
+                selected={cat.id === categoryId}
+                onPress={() => setCategoryId(cat.id)}
+                activeBg={c.farmGreen}
+                activeText={c.offwhite}
+              />
+            ))}
+          </View>
           <Pressable
-            onPress={pickDate}
-            style={[...input, { flex: 1, justifyContent: "center" }]}
+            onPress={() => router.push("/categories")}
+            style={s.manageLink}
           >
-            <Text style={{ color: lastPurchased ? c.text : c.sub }}>
-              {lastPurchased ? lastPurchased.toLocaleDateString() : "Not set"}
+            <Ionicons name="add-circle-outline" size={15} color={c.farmGreen} />
+            <Text
+              style={{ color: c.farmGreen, fontSize: 13, fontWeight: "600" }}
+            >
+              Manage categories
             </Text>
           </Pressable>
-          <Chip
-            label="Today"
-            onPress={() => setLastPurchased(new Date())}
-            activeBg={c.farmGreen}
-            activeText={c.card}
+        </Section>
+
+        <Section icon="storefront-outline" label="Stores" c={c}>
+          <View style={s.row}>
+            {stores.map((st) => (
+              <Chip
+                key={st.id}
+                label={st.name}
+                selected={storeIds.includes(st.id)}
+                onPress={() => toggleStore(st.id)}
+                activeBg={c.farmGreen}
+                activeText={c.offwhite}
+              />
+            ))}
+          </View>
+          <Pressable
+            onPress={() => router.push("/stores")}
+            style={s.manageLink}
+          >
+            <Ionicons name="add-circle-outline" size={15} color={c.farmGreen} />
+            <Text
+              style={{ color: c.farmGreen, fontSize: 13, fontWeight: "600" }}
+            >
+              Manage stores
+            </Text>
+          </Pressable>
+        </Section>
+
+        <Section icon="hourglass-outline" label="Usually lasts (days)" c={c}>
+          <TextInput
+            style={input}
+            value={days}
+            onChangeText={setDays}
+            keyboardType="number-pad"
+            placeholder="e.g. 7"
+            placeholderTextColor={c.sub}
           />
-          <Chip
-            label="Clear"
-            onPress={() => setLastPurchased(null)}
-            activeBg={c.farmGreen}
-            activeText={c.card}
+          <Err msg={errors.days} c={c} />
+        </Section>
+
+        <Section icon="calendar-outline" label="Last purchased" c={c}>
+          <View style={s.row}>
+            <Pressable
+              onPress={pickDate}
+              style={[...input, { flex: 1, justifyContent: "center" }]}
+            >
+              <Text style={{ color: lastPurchased ? c.text : c.sub }}>
+                {lastPurchased ? lastPurchased.toLocaleDateString() : "Not set"}
+              </Text>
+            </Pressable>
+            <Chip
+              label="Today"
+              onPress={() => setLastPurchased(new Date())}
+              activeBg={c.farmGreen}
+              activeText={c.offwhite}
+            />
+            <Chip
+              label="Clear"
+              onPress={() => setLastPurchased(null)}
+              activeBg={c.farmGreen}
+              activeText={c.offwhite}
+            />
+          </View>
+        </Section>
+
+        <View
+          style={[
+            s.switchRow,
+            { backgroundColor: c.offwhite, borderColor: c.border },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: c.text, fontSize: 15, fontWeight: "600" }}>
+              Add to shopping list
+            </Text>
+            <Text style={{ color: c.sub, fontSize: 13, marginTop: 2 }}>
+              Shows up on the To Buy tab
+            </Text>
+          </View>
+          <Switch
+            value={toBuy}
+            onValueChange={setToBuy}
+            trackColor={{ true: c.farmGreen800 }}
+            thumbColor={toBuy ? c.farmGreen : undefined}
           />
         </View>
-      </Section>
 
-      {/* Shopping */}
-      <View
-        style={[
-          s.switchRow,
-          { backgroundColor: c.card, borderColor: c.border },
-        ]}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: c.text, fontSize: 15, fontWeight: "600" }}>
-            Add to shopping list
-          </Text>
-          <Text style={{ color: c.sub, fontSize: 13, marginTop: 2 }}>
-            Shows up on the To Buy tab
-          </Text>
-        </View>
-        <Switch
-          value={toBuy}
-          onValueChange={setToBuy}
-          trackColor={{ true: c.farmGreen800 }}
-          thumbColor={toBuy ? c.farmGreen : undefined}
-        />
-      </View>
-
-      <Section icon="document-text-outline" label="Notes">
-        <TextInput
-          style={[...input, { height: 90, textAlignVertical: "top" }]}
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-          placeholder="Brand, preferences, etc."
-          placeholderTextColor={c.sub}
-        />
-      </Section>
+        <Section icon="document-text-outline" label="Notes" c={c}>
+          <TextInput
+            style={[...input, { height: 90, textAlignVertical: "top" }]}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            placeholder="Brand, preferences, etc."
+            placeholderTextColor={c.sub}
+          />
+        </Section>
+      </ScrollView>
 
       <Pressable
         disabled={saving}
@@ -407,18 +417,16 @@ export default function ItemForm({ initial, submitLabel, onSubmit }: Props) {
           { backgroundColor: c.farmGreen, opacity: saving ? 0.6 : 1 },
         ]}
       >
-        <Text
-          style={{ color: c.card, fontWeight: "700", fontSize: 16 }}
-        >
+        <Text style={{ color: c.offwhite, fontWeight: "700", fontSize: 16 }}>
           {submitLabel}
         </Text>
       </Pressable>
-    </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  wrap: { padding: 16, paddingBottom: 48 },
+  wrap: { padding: 16 },
   photo: {
     height: 140,
     width: 140,
@@ -473,7 +481,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   save: {
-    marginTop: 28,
+    marginTop: 10,
     paddingVertical: 14,
     borderRadius: 28,
     alignItems: "center",

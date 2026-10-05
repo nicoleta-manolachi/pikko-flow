@@ -1,5 +1,5 @@
-import BottomSheet from "@/components/BottomSheet";
-import IconPicker from "@/components/IconPicker";
+import BottomSheet from "@/components/layouts/BottomSheet";
+import IconPicker from "@/components/form/IconPicker";
 import { categoryIcon } from "@/utils/categoryIcons";
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -72,21 +72,21 @@ export default function CategoryFormModal({
         <View style={s.row}>
           <Pressable
             onPress={() => setPickerOpen(true)}
-            style={[s.iconBtn, { backgroundColor: accentTint }]}
+            style={[s.iconBtn, { backgroundColor: accentColor }]}
           >
             <Ionicons
               name={(icon ?? "pricetag-outline") as any}
               size={26}
-              color={accentColor}
+              color={accentTint}
             />
-            <View style={[s.editBadge, { backgroundColor: accentTint }]}>
-              <Ionicons name="pencil" size={10} color="#fff" />
+            <View style={[s.editBadge, { backgroundColor: accentColor }]}>
+              <Ionicons name="pencil" size={10} color={accentTint} />
             </View>
           </Pressable>
           <TextInput
             style={[
               s.input,
-              { backgroundColor: c.card, borderColor: c.border, color: c.text },
+              { backgroundColor: c.offwhite, borderColor: c.border, color: c.text },
             ]}
             value={name}
             onChangeText={setName}
@@ -104,10 +104,10 @@ export default function CategoryFormModal({
           onPress={handleSubmit}
           style={[
             s.save,
-            { backgroundColor: accentTint, opacity: saving ? 0.6 : 1 },
+            { backgroundColor: accentColor , opacity: saving ? 0.6 : 1 },
           ]}
         >
-          <Text style={{ color: accentColor, fontWeight: "700", fontSize: 16 }}>
+          <Text style={{ color: accentTint, fontWeight: "700", fontSize: 16 }}>
             {submitLabel}
           </Text>
         </Pressable>

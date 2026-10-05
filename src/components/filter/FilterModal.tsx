@@ -1,12 +1,12 @@
-import Chip from "@/components/Chip";
+import Chip from "@/components/filter/Chip";
 import type { Category, Priority, Store } from "@/db/schema";
 import { PRIORITIES } from "@/db/schema";
 import type { SortKey } from "@/store/uiStore";
-import { SORT_LABELS } from "@/components/SortMenu";
+import { SORT_LABELS } from "@/components/filter/SortMenu";
 import { useColors } from "@/utils/theme";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import BottomSheet from "@/components/BottomSheet";
+import BottomSheet from "@/components/layouts/BottomSheet";
 
 export type FilterDraft = {
   sort?: SortKey;

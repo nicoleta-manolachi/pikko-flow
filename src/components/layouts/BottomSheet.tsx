@@ -1,11 +1,12 @@
-import { useColors } from "@/utils/theme";
-import { useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
 import {
   Modal,
   Pressable,
   StyleSheet,
   View,
   type DimensionValue,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from "react-native";
 import {
   Gesture,
@@ -13,12 +14,15 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
+import { useColors } from "@/utils/theme";
 
 type Props = {
   visible: boolean;
@@ -30,6 +34,11 @@ type Props = {
 const DISMISS_DISTANCE = 100;
 const DISMISS_VELOCITY = 800;
 
+// Lets a scrollable child report whether it's currently scrolled to the top.
+// The sheet only drags closed when there's no child scroll content, or that
+// content is already at offset 0 — otherwise the drag is left to the ScrollView.
+const ScrollTopContext = createContext<SharedValue<number> | null>(null);
+
 export default function BottomSheet({
   visible,
   onClose,
@@ -38,22 +47,36 @@ export default function BottomSheet({
 }: Props) {
   const c = useColors();
   const translateY = useSharedValue(0);
+  const childScrollY = useSharedValue(0); // 0 if no scrollable child reports in
 
   useEffect(() => {
-    if (visible) translateY.value = 0;
+    if (visible) {
+      translateY.value = 0;
+      childScrollY.value = 0;
+    }
   }, [visible]);
 
   const pan = Gesture.Pan()
+    .activeOffsetY(10)
+    .failOffsetY([-10, 999])
     .onUpdate((e) => {
-      if (e.translationY > 0) translateY.value = e.translationY;
+      if (e.translationY > 0 && childScrollY.value <= 0) {
+        translateY.value = e.translationY;
+      }
     })
     .onEnd((e) => {
-      if (e.translationY > DISMISS_DISTANCE || e.velocityY > DISMISS_VELOCITY) {
+      if (
+        translateY.value > 0 &&
+        (e.translationY > DISMISS_DISTANCE || e.velocityY > DISMISS_VELOCITY)
+      ) {
         translateY.value = withTiming(800, { duration: 200 }, (finished) => {
           if (finished) runOnJS(onClose)();
         });
       } else {
-        translateY.value = withSpring(0, { damping: 18 });
+        translateY.value = withTiming(0, {
+          duration: 220,
+          easing: Easing.out(Easing.cubic),
+        });
       }
     });
 
@@ -65,23 +88,27 @@ export default function BottomSheet({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent
+      backdropColor="transparent"
       onRequestClose={onClose}
     >
-      {/* required: Modal opens a separate native window on Android, so gesture-handler
-          needs its own root here — the one in _layout.tsx doesn't reach inside the Modal */}
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Pressable style={s.backdrop} onPress={onClose} />
-        <Animated.View
-          style={[s.sheet, { backgroundColor: c.bg, maxHeight }, animatedStyle]}
-        >
-          <GestureDetector gesture={pan}>
+        <GestureDetector gesture={pan}>
+          <Animated.View
+            style={[
+              s.sheet,
+              { backgroundColor: c.bg, maxHeight },
+              animatedStyle,
+            ]}
+          >
             <View style={s.handleArea}>
               <View style={s.handle} />
             </View>
-          </GestureDetector>
-          {children}
-        </Animated.View>
+            <ScrollTopContext.Provider value={childScrollY}>
+              {children}
+            </ScrollTopContext.Provider>
+          </Animated.View>
+        </GestureDetector>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -104,7 +131,6 @@ const s = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowRadius: 20,
-    // shadowOffset: { width: 0, height: -4 },
     borderColor: "#DEE1E6",
   },
   handleArea: { paddingVertical: 14, alignItems: "center" },

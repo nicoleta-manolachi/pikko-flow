@@ -7,7 +7,7 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import PriorityBadge from "../PriorityBadge";
+import PriorityBadge from "./PriorityBadge";
 
 type Props = {
   item: ItemRow;
@@ -15,7 +15,6 @@ type Props = {
   onToggleBuy: () => void;
   onDelete: () => void;
   accentColor?: string; // "in shopping list" icon color, defaults to c.beetroot
-  editIconColor?: string; // swipe-right action icon color, defaults to c.beetroot200
 };
 
 export default function ItemCard({
@@ -24,7 +23,6 @@ export default function ItemCard({
   onToggleBuy,
   onDelete,
   accentColor,
-  editIconColor,
 }: Props) {
   const c = useColors();
   const ref = useRef<SwipeableMethods>(null);
@@ -34,7 +32,6 @@ export default function ItemCard({
   const alertColor = overdue ? c.danger : c.warn;
 
   const accent = accentColor ?? c.beetroot;
-  const editIcon = editIconColor ?? c.beetroot200;
 
   function confirmDelete() {
     Alert.alert(
@@ -61,10 +58,10 @@ export default function ItemCard({
         <View
           style={[
             s.action,
-            { backgroundColor: c.beetroot700, alignItems: "flex-start" },
+            { backgroundColor: c.edit, alignItems: "flex-start" },
           ]}
         >
-          <Ionicons name="create-outline" size={26} color={editIcon} />
+          <Ionicons name="create-outline" size={26} color={c.offwhite} />
         </View>
       )}
       renderRightActions={() => (
@@ -78,7 +75,8 @@ export default function ItemCard({
         </View>
       )}
     >
-      <View
+      <Pressable
+        onPress={onPress}
         style={[
           s.card,
           {
@@ -95,7 +93,7 @@ export default function ItemCard({
             <Ionicons name="basket-outline" size={26} color={c.sub} />
           </View>
         )}
-        <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flex: 1, gap: 4, overflow: "hidden" }}>
           <Text style={[s.name, { color: c.text }]} numberOfLines={1}>
             {item.name}
           </Text>
@@ -111,13 +109,14 @@ export default function ItemCard({
               <></>
             )}
 
-            {item.storeName ? (
+            {item.stores.length > 0 && (
               <Text style={{ color: c.sub }}>
-                <Ionicons name="storefront-outline" />
-                {` ${item.storeName}`}
+                <Ionicons name="storefront-outline" />{" "}
+                {item.stores
+                  .slice(0, 2)
+                  .map((s) => s.name)
+                  .join(", ")}
               </Text>
-            ) : (
-              <></>
             )}
           </View>
 
@@ -147,7 +146,7 @@ export default function ItemCard({
             />
           </Pressable>
         </View>
-      </View>
+      </Pressable>
     </ReanimatedSwipeable>
   );
 }

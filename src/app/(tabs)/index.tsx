@@ -1,13 +1,13 @@
-import EmptyState from "@/components/EmptyState";
+import EmptyState from "@/components/layouts/EmptyState";
 import ItemCard from "@/components/cards/ItemCard";
 import { useCategories, useItems, useStores } from "@/db/hooks";
-import { deleteItem, markBought, setToBuy } from "@/db/queries";
+import { deleteItem, ItemRow, markBought, setToBuy } from "@/db/queries";
 import { useColors } from "@/utils/theme";
 import { categoryIcon } from "@/utils/categoryIcons";
 import { applyView } from "@/utils/listing";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -17,6 +17,12 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
+import Animated from "react-native-reanimated";
+import {
+  useCollapsibleHeaderScrollHandler,
+  useResetHeaderOnFocus,
+} from "@/hooks/useCollapsibleHeader";
+import ItemDetailsSheet from "@/components/detail/ItemDetailsSheet";
 
 const PREVIEW_CATEGORIES = 5;
 const PREVIEW_STORES = 5;
@@ -28,6 +34,11 @@ export default function Home() {
   const { items } = useItems();
   const categories = useCategories();
   const stores = useStores();
+
+  const [detailsItem, setDetailsItem] = useState<ItemRow | null>(null);
+
+  const scrollHandler = useCollapsibleHeaderScrollHandler();
+  useResetHeaderOnFocus();
 
   const guard = (fn: () => Promise<unknown>) =>
     fn().catch(() => Alert.alert("Something went wrong", "Please try again."));
@@ -47,14 +58,19 @@ export default function Home() {
   const storeItemCount = useMemo(() => {
     const counts = new Map<number, number>();
     for (const it of items) {
-      if (it.storeId != null)
-        counts.set(it.storeId, (counts.get(it.storeId) ?? 0) + 1);
+      for (const st of it.stores) {
+        counts.set(st.id, (counts.get(st.id) ?? 0) + 1);
+      }
     }
     return counts;
   }, [items]);
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+    <Animated.ScrollView
+      contentContainerStyle={{ paddingBottom: 24 }}
+      onScroll={scrollHandler}
+      scrollEventThrottle={16}
+    >
       {/* Top Categories */}
       <Section
         title="Top Categories"
@@ -98,7 +114,13 @@ export default function Home() {
         subtitle="Manage where you shop."
         onSeeAll={() => router.push("/stores")}
         empty={stores.length === 0}
-        emptyLabel="No stores yet. Add one from the Stores tab."
+        emptyComponent={
+          <EmptyState
+            icon="storefront-outline"
+            title="No stores added yet"
+            subtitle="No stores yet. Add one from the Stores tab."
+          />
+        }
       >
         <ScrollView
           horizontal
@@ -165,19 +187,26 @@ export default function Home() {
             <ItemCard
               key={item.id}
               item={item}
-              onPress={() =>
-                router.push({
-                  pathname: "/item",
-                  params: { id: String(item.id) },
-                })
-              }
+              onPress={() => setDetailsItem(item)}
               onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
               onDelete={() => guard(() => deleteItem(item.id))}
             />
           ))}
         </View>
       </Section>
-    </ScrollView>
+
+      <ItemDetailsSheet
+        visible={detailsItem !== null}
+        item={detailsItem}
+        onClose={() => setDetailsItem(null)}
+        onEdit={() => {
+          if (!detailsItem) return;
+          const id = detailsItem.id;
+          setDetailsItem(null);
+          router.push({ pathname: "/item", params: { id: String(id) } });
+        }}
+      />
+    </Animated.ScrollView>
   );
 }
 
