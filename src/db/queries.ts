@@ -13,6 +13,13 @@ import { categoryIcon } from "@/utils/categoryIcons";
 import { ItemStoreRef } from "./hooks";
 
 export type ItemRow = Item & {
+  id: number;
+  name: string;
+  imageUri: string | null;
+  quantity: string;
+  unit: string;
+  priority: string;
+  toBuy: boolean;
   categoryName: string | null;
   stores: ItemStoreRef[];
 };
@@ -102,7 +109,8 @@ export async function setToBuy(id: number, toBuy: boolean) {
 export const categoriesQuery = () =>
   db.select().from(categories).orderBy(desc(categories.id));
 
-export const storesQuery = () => db.select().from(stores).orderBy(desc(stores.id));
+export const storesQuery = () =>
+  db.select().from(stores).orderBy(desc(stores.id));
 
 export async function getItem(id: number): Promise<Item | undefined> {
   const rows = await db.select().from(items).where(eq(items.id, id)).limit(1);

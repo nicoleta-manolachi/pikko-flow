@@ -12,6 +12,7 @@ import PriorityBadge from "./PriorityBadge";
 type Props = {
   item: ItemRow;
   onPress: () => void;
+  onSwipeEdit: () => void;
   onToggleBuy: () => void;
   onDelete: () => void;
   accentColor?: string; // "in shopping list" icon color, defaults to c.beetroot
@@ -20,6 +21,7 @@ type Props = {
 export default function ItemCard({
   item,
   onPress,
+  onSwipeEdit,
   onToggleBuy,
   onDelete,
   accentColor,
@@ -51,7 +53,7 @@ export default function ItemCard({
       overshootRight={false}
       onSwipeableOpen={(dir) => {
         ref.current?.close();
-        if (dir === "right") onPress();
+        if (dir === "right") onSwipeEdit();
         else confirmDelete();
       }}
       renderLeftActions={() => (

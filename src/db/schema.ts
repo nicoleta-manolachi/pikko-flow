@@ -35,7 +35,6 @@ export const items = sqliteTable("items", {
   categoryId: integer("category_id").references(() => categories.id, {
     onDelete: "set null",
   }),
-  // storeId removed — see itemStores below
   avgConsumeDays: integer("avg_consume_days"),
   lastPurchasedAt: integer("last_purchased_at", { mode: "timestamp_ms" }),
   checkedAt: integer("checked_at", { mode: "timestamp_ms" }),

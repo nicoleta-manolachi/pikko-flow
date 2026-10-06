@@ -1,7 +1,7 @@
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRef } from "react";
-import { Alert, Image, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -9,20 +9,27 @@ import { Store } from "@/db/schema";
 
 type Props = {
   store: Store;
-  count: number;
+  itemsCount: number;
+  onSwipeEdit: () => void;
   onPress: () => void;
   onDelete: () => void;
 };
 
-export default function ItemStore({ store, count, onPress, onDelete }: Props) {
+export default function StoreCard({
+  store,
+  itemsCount,
+  onSwipeEdit,
+  onPress,
+  onDelete,
+}: Props) {
   const c = useColors();
   const ref = useRef<SwipeableMethods>(null);
 
   function confirmDelete() {
     Alert.alert(
       "Delete store?",
-      count > 0
-        ? `“${store.name}” will be removed. ${count} item${count > 1 ? "s" : ""} will become unassigned, but won't be deleted.`
+      itemsCount > 0
+        ? `“${store.name}” will be removed. ${itemsCount} item${itemsCount > 1 ? "s" : ""} will become unassigned, but won't be deleted.`
         : `“${store.name}” will be removed.`,
       [
         { text: "Cancel", style: "cancel" },
@@ -38,7 +45,7 @@ export default function ItemStore({ store, count, onPress, onDelete }: Props) {
       overshootRight={false}
       onSwipeableOpen={(dir) => {
         ref.current?.close();
-        if (dir === "right") onPress();
+        if (dir === "right") onSwipeEdit();
         else confirmDelete();
       }}
       renderLeftActions={() => (
@@ -62,7 +69,10 @@ export default function ItemStore({ store, count, onPress, onDelete }: Props) {
         </View>
       )}
     >
-      <View style={[s.row, { backgroundColor: c.card, borderColor: c.border }]}>
+      <Pressable
+        onPress={onPress}
+        style={[s.row, { backgroundColor: c.card, borderColor: c.border }]}
+      >
         {store.imageUri ? (
           <Image source={{ uri: store.imageUri }} style={s.thumb} />
         ) : (
@@ -83,10 +93,10 @@ export default function ItemStore({ store, count, onPress, onDelete }: Props) {
             </Text>
           ) : null}
           <Text style={{ color: c.sub, fontSize: 12 }}>
-            {count} item{count === 1 ? "" : "s"}
+            {itemsCount} item{itemsCount === 1 ? "" : "s"}
           </Text>
         </View>
-      </View>
+      </Pressable>
     </ReanimatedSwipeable>
   );
 }

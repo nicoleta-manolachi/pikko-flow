@@ -3,9 +3,9 @@ import { useItems, useStores } from "@/db/hooks";
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
-import { deleteStore } from "@/db/queries";
+import { useMemo, useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
+import { deleteStore, ItemRow } from "@/db/queries";
 import { deleteImageFile } from "@/utils/images";
 import type { Store } from "@/db/schema";
 import Animated from "react-native-reanimated";
@@ -13,25 +13,31 @@ import {
   useCollapsibleHeaderScrollHandler,
   useResetHeaderOnFocus,
 } from "@/hooks/useCollapsibleHeader";
-import ItemStore from "@/components/cards/ItemStore";
 import AnimatedGradientFab from "@/components/animation/AnimatedGradientFab";
+import StoreDetailsSheet from "@/components/detail/StoreDetailsSheet";
+import StoreCard from "@/components/cards/StoreCard";
 
 export default function Stores() {
   const router = useRouter();
   const stores = useStores();
   const { items } = useItems();
+  const [detailsStore, setDetailsStore] = useState<Store | null>(null);
 
   const scrollHandler = useCollapsibleHeaderScrollHandler();
   useResetHeaderOnFocus();
 
-  const itemCount = useMemo(() => {
-    const counts = new Map<number, number>();
-    for (const it of items) {
-      for (const st of it.stores) {
-        counts.set(st.id, (counts.get(st.id) ?? 0) + 1);
+  const storeItems = useMemo(() => {
+    const result = new Map<number, typeof items>();
+
+    for (const item of items) {
+      for (const store of item.stores) {
+        const itemsForStore = result.get(store.id) ?? [];
+        itemsForStore.push(item);
+        result.set(store.id, itemsForStore);
       }
     }
-    return counts;
+
+    return result;
   }, [items]);
 
   const guard = (fn: () => Promise<unknown>) =>
@@ -52,15 +58,16 @@ export default function Stores() {
         scrollEventThrottle={16}
         contentContainerStyle={{ padding: 12, gap: 10, flexGrow: 1 }}
         renderItem={({ item: store }) => (
-          <ItemStore
+          <StoreCard
             store={store}
-            count={itemCount.get(store.id) ?? 0}
-            onPress={() =>
+            itemsCount={storeItems.get(store.id)?.length ?? 0}
+            onSwipeEdit={() =>
               router.push({
                 pathname: "/store",
                 params: { id: String(store.id) },
               })
             }
+            onPress={() => setDetailsStore(store)}
             onDelete={() => handleDelete(store)}
           />
         )}
@@ -77,14 +84,32 @@ export default function Stores() {
         }
       />
 
-      <AnimatedGradientFab
-        onPress={() => router.push("/store")}
-        colors={[c.beetroot, c.pumpkin, c.lemon]}
-        style={s.fab}
-        accessibilityLabel="Add store"
-      >
-        <Ionicons name="add" size={30} color={c.beetroot200} />
-      </AnimatedGradientFab>
+      {detailsStore ? (
+        <StoreDetailsSheet
+          visible={detailsStore !== null}
+          item={detailsStore}
+          itemsCount={storeItems.get(detailsStore.id)?.length ?? 0}
+          storeItems={storeItems.get(detailsStore.id) ?? []}
+          onClose={() => setDetailsStore(null)}
+          onEdit={() => {
+            if (!detailsStore) return;
+            const id = detailsStore.id;
+            setDetailsStore(null);
+            router.push({ pathname: "/store", params: { id: String(id) } });
+          }}
+        />
+      ) : null}
+
+      {stores.length > 0 ? (
+        <AnimatedGradientFab
+          onPress={() => router.push("/store")}
+          colors={[c.beetroot, c.pumpkin, c.lemon]}
+          style={s.fab}
+          accessibilityLabel="Add store"
+        >
+          <Ionicons name="add" size={30} color={c.beetroot200} />
+        </AnimatedGradientFab>
+      ) : null}
     </View>
   );
 }

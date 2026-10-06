@@ -187,6 +187,12 @@ export default function Home() {
             <ItemCard
               key={item.id}
               item={item}
+              onSwipeEdit={() =>
+                router.push({
+                  pathname: "/item",
+                  params: { id: String(item.id) },
+                })
+              }
               onPress={() => setDetailsItem(item)}
               onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
               onDelete={() => guard(() => deleteItem(item.id))}

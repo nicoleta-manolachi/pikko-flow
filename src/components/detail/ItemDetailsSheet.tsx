@@ -60,7 +60,7 @@ export default function ItemDetailsSheet({
   const alertColor = overdue ? c.danger : c.warn;
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} maxHeight="90%">
+    <BottomSheet visible={visible} onClose={onClose} maxHeight="95%">
       <View style={[s.header, { borderColor: c.border }]}>
         {item.imageUri ? (
           <Image source={{ uri: item.imageUri }} style={s.thumb} />

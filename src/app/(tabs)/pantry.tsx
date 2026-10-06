@@ -156,6 +156,7 @@ export default function Pantry() {
         renderItem={({ item }) => (
           <ItemCard
             item={item}
+            onSwipeEdit={() => router.push({ pathname: "/item", params: { id: String(item.id) } })}
             onPress={() => setDetailsItem(item)}
             onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
             onDelete={() => onDelete(item)}
