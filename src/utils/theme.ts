@@ -206,3 +206,12 @@ export const priorityColor: Record<Priority, string> = {
   Medium: "#E0A100",
   High: "#D64545",
 };
+
+export const TAB_BAR_HEIGHT = 72;
+export const TAB_BAR_MARGIN = 16;
+export const EXTRA_CLEARANCE = 16;
+
+export const TAB_BAR_CLEARANCE =
+  TAB_BAR_HEIGHT + TAB_BAR_MARGIN + EXTRA_CLEARANCE * 2;
+
+export const LIST_BOTTOM_PADDING = TAB_BAR_CLEARANCE;

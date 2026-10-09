@@ -1,8 +1,8 @@
 import EmptyState from "@/components/layouts/EmptyState";
 import ItemCard from "@/components/cards/ItemCard";
 import { useCategories, useItems, useStores } from "@/db/hooks";
-import { deleteItem, ItemRow, markBought, setToBuy } from "@/db/queries";
-import { useColors } from "@/utils/theme";
+import { deleteItem, ItemRow, setToBuy } from "@/db/queries";
+import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
 import { categoryIcon } from "@/utils/categoryIcons";
 import { applyView } from "@/utils/listing";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +23,7 @@ import {
   useResetHeaderOnFocus,
 } from "@/hooks/useCollapsibleHeader";
 import ItemDetailsSheet from "@/components/detail/ItemDetailsSheet";
+import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
 
 const PREVIEW_CATEGORIES = 5;
 const PREVIEW_STORES = 5;
@@ -66,153 +67,156 @@ export default function Home() {
   }, [items]);
 
   return (
-    <Animated.ScrollView
-      contentContainerStyle={{ paddingBottom: 24 }}
-      onScroll={scrollHandler}
-      scrollEventThrottle={16}
-    >
-      {/* Top Categories */}
-      <Section
-        title="Top Categories"
-        subtitle="Organize your groceries by type."
-        onSeeAll={() => router.push("/categories")}
-        empty={categories.length === 0}
-        emptyLabel="No categories yet. Add one from the Categories tab."
+    <View style={{ flex: 1 }}>
+      <Animated.ScrollView
+        contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
-        <View style={s.wrapRow}>
-          {categories.slice(0, PREVIEW_CATEGORIES).map((cat) => (
-            <Pressable
-              key={cat.id}
-              onPress={() => router.push("/categories")}
-              style={[s.pill, { backgroundColor: c.lemon500 }]}
-            >
-              <Ionicons
-                name={(cat.icon ?? categoryIcon(cat.name)) as any}
-                size={16}
-                color={c.beetroot}
-              />
-              <Text style={[s.pillText, { color: c.beetroot }]}>
-                {cat.name}
-              </Text>
-            </Pressable>
-          ))}
-          {categories.length > 0 && (
-            <Pressable
-              onPress={() => router.push("/categories")}
-              style={[s.pill, { backgroundColor: c.lemon300 }]}
-            >
-              <Ionicons name="add" size={16} color={c.beetroot} />
-              <Text style={[s.pillText, { color: c.beetroot }]}>See all</Text>
-            </Pressable>
-          )}
-        </View>
-      </Section>
-
-      {/* Stores */}
-      <Section
-        title="Stores"
-        subtitle="Manage where you shop."
-        onSeeAll={() => router.push("/stores")}
-        empty={stores.length === 0}
-        emptyComponent={
-          <EmptyState
-            icon="storefront-outline"
-            title="No stores added yet"
-            subtitle="No stores yet. Add one from the Stores tab."
-          />
-        }
-      >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 12 }}
+        {/* Top Categories */}
+        <Section
+          title="Top Categories"
+          subtitle="Organize your groceries by type."
+          onSeeAll={() => router.push("/categories")}
+          empty={categories.length === 0}
+          emptyLabel="No categories yet. Add one from the Categories tab."
         >
-          {stores.slice(0, PREVIEW_STORES).map((st) => {
-            const count = storeItemCount.get(st.id) ?? 0;
-            return (
+          <View style={s.wrapRow}>
+            {categories.slice(0, PREVIEW_CATEGORIES).map((cat) => (
               <Pressable
-                key={st.id}
-                onPress={() => router.push("/stores")}
-                style={[
-                  s.storeCard,
-                  { backgroundColor: c.card, borderColor: c.border },
-                ]}
+                key={cat.id}
+                onPress={() => router.push("/categories")}
+                style={[s.pill, { backgroundColor: c.lemon500 }]}
               >
-                <View style={[s.storeImage, { backgroundColor: c.chip }]}>
-                  {st.imageUri ? (
-                    <Image
-                      source={{ uri: st.imageUri }}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  ) : (
-                    <Ionicons name="image-outline" size={28} color={c.sub} />
-                  )}
-                </View>
-                <Text
-                  style={[s.storeName, { color: c.beetroot }]}
-                  numberOfLines={1}
-                >
-                  {st.name}
+                <Ionicons
+                  name={(cat.icon ?? categoryIcon(cat.name)) as any}
+                  size={16}
+                  color={c.beetroot}
+                />
+                <Text style={[s.pillText, { color: c.beetroot }]}>
+                  {cat.name}
                 </Text>
-                <View style={s.storeMetaRow}>
-                  <Ionicons name="basket-outline" size={13} color={c.sub} />
-                  <Text style={{ color: c.sub, fontSize: 12 }}>
-                    {count} item{count === 1 ? "" : "s"}
-                  </Text>
-                </View>
               </Pressable>
-            );
-          })}
-        </ScrollView>
-      </Section>
+            ))}
+            {categories.length > 0 && (
+              <Pressable
+                onPress={() => router.push("/categories")}
+                style={[s.pill, { backgroundColor: c.lemon300 }]}
+              >
+                <Ionicons name="add" size={16} color={c.beetroot} />
+                <Text style={[s.pillText, { color: c.beetroot }]}>See all</Text>
+              </Pressable>
+            )}
+          </View>
+        </Section>
 
-      {/* Items */}
-      <Section
-        title="Items"
-        subtitle="Keep track of everything."
-        onSeeAll={() => router.push("/pantry")}
-        empty={items.length === 0}
-        emptyComponent={
-          <EmptyState
-            icon="basket-outline"
-            title="Your pantry is empty"
-            subtitle="Add your first grocery item to start tracking what you need."
-            actionLabel="Add your first item"
-            onAction={() => router.push("/item")}
-          />
-        }
-      >
-        <View style={{ gap: 10 }}>
-          {topItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onSwipeEdit={() =>
-                router.push({
-                  pathname: "/item",
-                  params: { id: String(item.id) },
-                })
-              }
-              onPress={() => setDetailsItem(item)}
-              onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
-              onDelete={() => guard(() => deleteItem(item.id))}
+        {/* Stores */}
+        <Section
+          title="Stores"
+          subtitle="Manage where you shop."
+          onSeeAll={() => router.push("/stores")}
+          empty={stores.length === 0}
+          emptyComponent={
+            <EmptyState
+              icon="storefront-outline"
+              title="No stores added yet"
+              subtitle="No stores yet. Add one from the Stores tab."
             />
-          ))}
-        </View>
-      </Section>
+          }
+        >
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
+          >
+            {stores.slice(0, PREVIEW_STORES).map((st) => {
+              const count = storeItemCount.get(st.id) ?? 0;
+              return (
+                <Pressable
+                  key={st.id}
+                  onPress={() => router.push("/stores")}
+                  style={[
+                    s.storeCard,
+                    { backgroundColor: c.card, borderColor: c.border },
+                  ]}
+                >
+                  <View style={[s.storeImage, { backgroundColor: c.chip }]}>
+                    {st.imageUri ? (
+                      <Image
+                        source={{ uri: st.imageUri }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    ) : (
+                      <Ionicons name="image-outline" size={28} color={c.sub} />
+                    )}
+                  </View>
+                  <Text
+                    style={[s.storeName, { color: c.beetroot }]}
+                    numberOfLines={1}
+                  >
+                    {st.name}
+                  </Text>
+                  <View style={s.storeMetaRow}>
+                    <Ionicons name="basket-outline" size={13} color={c.sub} />
+                    <Text style={{ color: c.sub, fontSize: 12 }}>
+                      {count} item{count === 1 ? "" : "s"}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </Section>
 
-      <ItemDetailsSheet
-        visible={detailsItem !== null}
-        item={detailsItem}
-        onClose={() => setDetailsItem(null)}
-        onEdit={() => {
-          if (!detailsItem) return;
-          const id = detailsItem.id;
-          setDetailsItem(null);
-          router.push({ pathname: "/item", params: { id: String(id) } });
-        }}
-      />
-    </Animated.ScrollView>
+        {/* Items */}
+        <Section
+          title="Items"
+          subtitle="Keep track of everything."
+          onSeeAll={() => router.push("/pantry")}
+          empty={items.length === 0}
+          emptyComponent={
+            <EmptyState
+              icon="basket-outline"
+              title="Your pantry is empty"
+              subtitle="Add your first grocery item to start tracking what you need."
+              actionLabel="Add your first item"
+              onAction={() => router.push("/item")}
+            />
+          }
+        >
+          <View style={{ gap: 10 }}>
+            {topItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onSwipeEdit={() =>
+                  router.push({
+                    pathname: "/item",
+                    params: { id: String(item.id) },
+                  })
+                }
+                onPress={() => setDetailsItem(item)}
+                onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
+                onDelete={() => guard(() => deleteItem(item.id))}
+              />
+            ))}
+          </View>
+        </Section>
+
+        <ItemDetailsSheet
+          visible={detailsItem !== null}
+          item={detailsItem}
+          onClose={() => setDetailsItem(null)}
+          onEdit={() => {
+            if (!detailsItem) return;
+            const id = detailsItem.id;
+            setDetailsItem(null);
+            router.push({ pathname: "/item", params: { id: String(id) } });
+          }}
+        />
+      </Animated.ScrollView>
+      <BottomFadeOverlay />
+    </View>
   );
 }
 

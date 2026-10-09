@@ -17,7 +17,7 @@ import {
 } from "@/hooks/useCollapsibleHeader";
 import { applyView } from "@/utils/listing";
 import { isRunningLow } from "@/utils/runout";
-import { useColors } from "@/utils/theme";
+import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
@@ -30,6 +30,7 @@ import {
   View,
 } from "react-native";
 import Animated from "react-native-reanimated";
+import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
 
 type ShoppingSection = { title: string; data: ItemRow[] };
 const AnimatedSectionList = Animated.createAnimatedComponent(
@@ -239,7 +240,12 @@ export default function Shopping() {
         sections={sections}
         keyExtractor={(i) => String(i.id)}
         stickySectionHeadersEnabled={false}
-        contentContainerStyle={{ padding: 12, gap: 8, flexGrow: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          paddingBottom: LIST_BOTTOM_PADDING,
+          flexGrow: 1,
+          gap: 8,
+        }}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         ListHeaderComponent={
@@ -349,6 +355,7 @@ export default function Shopping() {
           router.push({ pathname: "/item", params: { id: String(id) } });
         }}
       />
+      <BottomFadeOverlay />
     </View>
   );
 }

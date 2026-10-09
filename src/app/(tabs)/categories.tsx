@@ -1,10 +1,12 @@
+import Fab from "@/components/Fab";
 import CategoryFormModal from "@/components/form/CategoryFormModal";
+import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
 import EmptyState from "@/components/layouts/EmptyState";
 import { useCategories, useItems } from "@/db/hooks";
 import { createCategory, deleteCategory, updateCategory } from "@/db/queries";
 import type { Category } from "@/db/schema";
 import { categoryIcon } from "@/utils/categoryIcons";
-import { useColors } from "@/utils/theme";
+import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
@@ -62,7 +64,12 @@ export default function Categories() {
       <FlatList
         data={categories}
         keyExtractor={(cat) => String(cat.id)}
-        contentContainerStyle={{ padding: 12, gap: 10, flexGrow: 1 }}
+        contentContainerStyle={{
+          padding: 12,
+          paddingBottom: LIST_BOTTOM_PADDING,
+          gap: 10,
+          flexGrow: 1,
+        }}
         renderItem={({ item: cat }) => {
           const icon = cat.icon ?? categoryIcon(cat.name);
           const count = itemCount.get(cat.id) ?? 0;
@@ -115,14 +122,11 @@ export default function Categories() {
           />
         }
       />
-
-      <Pressable
+      <Fab
         onPress={() => setAddOpen(true)}
-        style={[s.fab, { backgroundColor: accentColor }]}
+        backgroundColor={accentColor}
         accessibilityLabel="Add category"
-      >
-        <Ionicons name="add" size={30} color="#fff" />
-      </Pressable>
+      />
 
       <CategoryFormModal
         visible={addOpen}
@@ -147,6 +151,8 @@ export default function Categories() {
         accentColor={accentColor}
         accentTint={accentTint}
       />
+
+      <BottomFadeOverlay />
     </View>
   );
 }
@@ -166,16 +172,5 @@ const s = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 6,
   },
 });

@@ -1,6 +1,6 @@
 import EmptyState from "@/components/layouts/EmptyState";
 import { useItems, useStores } from "@/db/hooks";
-import { useColors } from "@/utils/theme";
+import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
@@ -16,6 +16,8 @@ import {
 import AnimatedGradientFab from "@/components/animation/AnimatedGradientFab";
 import StoreDetailsSheet from "@/components/detail/StoreDetailsSheet";
 import StoreCard from "@/components/cards/StoreCard";
+import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
+import Fab from "@/components/Fab";
 
 export default function Stores() {
   const router = useRouter();
@@ -56,7 +58,12 @@ export default function Stores() {
         keyExtractor={(s) => String(s.id)}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={{ padding: 12, gap: 10, flexGrow: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          flexGrow: 1,
+          paddingBottom: LIST_BOTTOM_PADDING,
+          gap: 10,
+        }}
         renderItem={({ item: store }) => (
           <StoreCard
             store={store}
@@ -101,30 +108,22 @@ export default function Stores() {
       ) : null}
 
       {stores.length > 0 ? (
-        <AnimatedGradientFab
+        // <AnimatedGradientFab
+        //   onPress={() => router.push("/store")}
+        //   colors={[c.beetroot, c.pumpkin, c.lemon]}
+        //   style={s.fab}
+        //   accessibilityLabel="Add store"
+        // >
+        //   <Ionicons name="add" size={30} color={c.beetroot200} />
+        // </AnimatedGradientFab>
+        <Fab
           onPress={() => router.push("/store")}
-          colors={[c.beetroot, c.pumpkin, c.lemon]}
-          style={s.fab}
+          backgroundColor={c.chilliPaper}
           accessibilityLabel="Add store"
-        >
-          <Ionicons name="add" size={30} color={c.beetroot200} />
-        </AnimatedGradientFab>
+        />
       ) : null}
+
+      <BottomFadeOverlay />
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    elevation: 6,
-  },
-});

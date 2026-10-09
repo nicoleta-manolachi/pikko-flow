@@ -8,13 +8,12 @@ import { type Item } from "@/db/schema";
 import { useUiStore } from "@/store/uiStore";
 import { deleteImageFile } from "@/utils/images";
 import { applyView } from "@/utils/listing";
-import { useColors } from "@/utils/theme";
+import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Alert,
-  FlatList,
   Pressable,
   StyleSheet,
   Text,
@@ -27,6 +26,8 @@ import {
 } from "@/hooks/useCollapsibleHeader";
 import Animated from "react-native-reanimated";
 import ItemDetailsSheet from "@/components/detail/ItemDetailsSheet";
+import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
+import Fab from "@/components/Fab";
 
 export default function Pantry() {
   const c = useColors();
@@ -148,7 +149,7 @@ export default function Pantry() {
         keyExtractor={(i) => String(i.id)}
         contentContainerStyle={{
           paddingHorizontal: 12,
-          paddingBottom: 100,
+          paddingBottom: LIST_BOTTOM_PADDING,
           gap: 10,
         }}
         onScroll={scrollHandler}
@@ -156,7 +157,12 @@ export default function Pantry() {
         renderItem={({ item }) => (
           <ItemCard
             item={item}
-            onSwipeEdit={() => router.push({ pathname: "/item", params: { id: String(item.id) } })}
+            onSwipeEdit={() =>
+              router.push({
+                pathname: "/item",
+                params: { id: String(item.id) },
+              })
+            }
             onPress={() => setDetailsItem(item)}
             onToggleBuy={() => guard(() => setToBuy(item.id, !item.toBuy))}
             onDelete={() => onDelete(item)}
@@ -190,13 +196,11 @@ export default function Pantry() {
       />
 
       {items.length !== 0 ? (
-        <Pressable
+        <Fab
           onPress={() => router.push("/item")}
-          style={[s.fab, { backgroundColor: c.farmGreen }]}
+          backgroundColor={c.farmGreen}
           accessibilityLabel="Add item"
-        >
-          <Ionicons name="add" size={30} color={c.farmGreen300} />
-        </Pressable>
+        />
       ) : null}
 
       <FilterModal
@@ -237,6 +241,7 @@ export default function Pantry() {
           setPending(null);
         }}
       />
+      <BottomFadeOverlay />
     </View>
   );
 }
@@ -270,16 +275,5 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 6,
   },
 });

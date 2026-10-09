@@ -183,7 +183,7 @@ export default function StoreDetailsSheet({
 
       <Pressable
         onPress={onEdit}
-        style={[s.editBtn, { backgroundColor: c.farmGreen }]}
+        style={[s.editBtn, { backgroundColor: c.chilliPaper }]}
       >
         <Ionicons name="create-outline" size={18} color="#fff" />
         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>

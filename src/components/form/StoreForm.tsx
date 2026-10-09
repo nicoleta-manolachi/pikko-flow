@@ -155,12 +155,10 @@ export default function StoreForm({ initial, submitLabel, onSubmit }: Props) {
           onPress={submit}
           style={[
             s.save,
-            { backgroundColor: c.beetroot, opacity: saving ? 0.6 : 1 },
+            { backgroundColor: c.chilliPaper, opacity: saving ? 0.6 : 1 },
           ]}
         >
-          <Text
-            style={{ color: c.beetroot200, fontWeight: "700", fontSize: 16 }}
-          >
+          <Text style={{ color: c.offwhite, fontWeight: "700", fontSize: 16 }}>
             {submitLabel}
           </Text>
         </Pressable>

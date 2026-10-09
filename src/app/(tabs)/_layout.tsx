@@ -1,4 +1,9 @@
-import { useColors } from "@/utils/theme";
+import {
+  EXTRA_CLEARANCE,
+  TAB_BAR_HEIGHT,
+  TAB_BAR_MARGIN,
+  useColors,
+} from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/js-tabs";
@@ -10,9 +15,6 @@ import type { Colors } from "@/utils/theme";
 import { useSharedValue } from "react-native-reanimated";
 import { HeaderScrollContext } from "@/context/headerScroll";
 
-const BAR_HEIGHT = 72;
-const SIDE_MARGIN = 16; // increase for a narrower bar
-const BOTTOM_MARGIN = 16;
 const INNER_PADDING = 6; // keeps the active pill off the bar's edges
 
 const SUBTITLES: Record<string, string> = {
@@ -32,7 +34,7 @@ type RouteNavColors = { route: string; base: ColorKey; bg100: ColorKey };
 const HEADER_COLORS: RouteHeaderColors[] = [
   { route: "index", bg: "beetroot", text: "lemon" },
   { route: "pantry", bg: "farmGreen", text: "lemonGreen" },
-  { route: "stores", bg: "lemon", text: "beetroot" },
+  { route: "stores", bg: "lemon", text: "chilliPaper" },
   { route: "categories", bg: "pumpkin", text: "beetroot" },
   { route: "shopping", bg: "lemonGreen", text: "farmGreen" },
 ];
@@ -41,7 +43,7 @@ const HEADER_COLORS: RouteHeaderColors[] = [
 const NAV_COLORS: RouteNavColors[] = [
   { route: "index", base: "beetroot", bg100: "beetroot300" },
   { route: "pantry", base: "farmGreen", bg100: "farmGreen300" },
-  { route: "stores", base: "beetroot", bg100: "lemon400" },
+  { route: "stores", base: "chilliPaper", bg100: "lemon400" },
   { route: "categories", base: "beetroot", bg100: "pumpkin400" },
   { route: "shopping", base: "lemonGreen", bg100: "lemonGreen300" },
 ];
@@ -69,9 +71,9 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       style={[
         styles.wrap,
         {
-          left: SIDE_MARGIN,
-          right: SIDE_MARGIN,
-          bottom: insets.bottom + BOTTOM_MARGIN,
+          left: TAB_BAR_MARGIN,
+          right: TAB_BAR_MARGIN,
+          bottom: insets.bottom + EXTRA_CLEARANCE,
         },
       ]}
     >
@@ -139,7 +141,6 @@ export default function TabsLayout() {
           tabBarStyle: { position: "absolute" },
           sceneStyle: {
             backgroundColor: c.bg,
-            paddingBottom: BAR_HEIGHT + insets.bottom + BOTTOM_MARGIN,
           },
           headerStyle: { backgroundColor: c.card },
           headerTintColor: c.text,
@@ -166,51 +167,55 @@ export default function TabsLayout() {
           },
         }}
       >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="pantry"
-        options={{
-          title: "Pantry",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="file-tray-full-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="stores"
-        options={{
-          title: "Stores",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="storefront-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="categories"
-        options={{
-          title: "Categories",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="shopping"
-        options={{
-          title: "List",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="basket-outline" color={color} size={size} />
-          ),
-        }}
-      />
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" color={color} size={size} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="pantry"
+          options={{
+            title: "Pantry",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                name="file-tray-full-outline"
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="stores"
+          options={{
+            title: "Stores",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="storefront-outline" color={color} size={size} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="categories"
+          options={{
+            title: "Categories",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="grid-outline" color={color} size={size} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="shopping"
+          options={{
+            title: "List",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="basket-outline" color={color} size={size} />
+            ),
+          }}
+        />
       </Tabs>
     </HeaderScrollContext.Provider>
   );
@@ -220,19 +225,18 @@ const styles = StyleSheet.create({
   wrap: { position: "absolute" },
   bar: {
     flexDirection: "row",
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
+    height: TAB_BAR_HEIGHT,
+    borderRadius: TAB_BAR_HEIGHT / 2,
     padding: INNER_PADDING,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    // borderWidth: 1,
+    boxShadow: "rgba(0, 0, 0, 0.16) 0px 1px 4px", // nice border around
+    // boxShadow: "rgba(17, 17, 26, 0.1) 0px 1px 0px", // bottom shadow
+    // boxShadow: "rgba(14, 63, 126, 0.06) 0px 0px 0px 1px, rgba(42, 51, 70, 0.03) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.04) 0px 2px 2px -1px, rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.03) 0px 5px 5px -2.5px, rgba(42, 51, 70, 0.03) 0px 10px 10px -5px, rgba(42, 51, 70, 0.03) 0px 24px 24px -8px", // nice border around
   },
   item: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: (BAR_HEIGHT - INNER_PADDING * 2) / 2,
+    borderRadius: (TAB_BAR_HEIGHT - INNER_PADDING * 2) / 2,
   },
 });
