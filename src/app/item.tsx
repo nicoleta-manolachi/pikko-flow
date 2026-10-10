@@ -24,10 +24,6 @@ export default function ItemScreen() {
 
   const [storeIds, setStoreIds] = useState<number[]>([]);
 
-  // useEffect(() => {
-  //   if (!editing) return;
-  //   getItem(Number(id)).then(setItem).catch(() => {}).finally(() => setLoading(false));
-  // }, [id, editing]);
   useEffect(() => {
     if (!editing) return;
     Promise.all([getItem(Number(id)), getItemStoreIds(Number(id))])

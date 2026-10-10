@@ -56,6 +56,25 @@ export default function Home() {
     [items],
   );
 
+  const categoryItemCount = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const it of items) {
+      if (it.categoryId != null)
+        counts.set(it.categoryId, (counts.get(it.categoryId) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
+
+  const topCategories = useMemo(
+    () =>
+      [...categories].sort(
+        (a, b) =>
+          (categoryItemCount.get(b.id) ?? 0) -
+          (categoryItemCount.get(a.id) ?? 0),
+      ),
+    [categories, categoryItemCount],
+  );
+
   const storeItemCount = useMemo(() => {
     const counts = new Map<number, number>();
     for (const it of items) {
@@ -82,7 +101,7 @@ export default function Home() {
           emptyLabel="No categories yet. Add one from the Categories tab."
         >
           <View style={s.wrapRow}>
-            {categories.slice(0, PREVIEW_CATEGORIES).map((cat) => (
+            {topCategories.slice(0, PREVIEW_CATEGORIES).map((cat) => (
               <Pressable
                 key={cat.id}
                 onPress={() => router.push("/categories")}

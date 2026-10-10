@@ -1,11 +1,10 @@
 import EmptyState from "@/components/layouts/EmptyState";
 import { useItems, useStores } from "@/db/hooks";
 import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
-import { deleteStore, ItemRow } from "@/db/queries";
+import { Alert, View } from "react-native";
+import { deleteStore } from "@/db/queries";
 import { deleteImageFile } from "@/utils/images";
 import type { Store } from "@/db/schema";
 import Animated from "react-native-reanimated";
@@ -13,7 +12,6 @@ import {
   useCollapsibleHeaderScrollHandler,
   useResetHeaderOnFocus,
 } from "@/hooks/useCollapsibleHeader";
-import AnimatedGradientFab from "@/components/animation/AnimatedGradientFab";
 import StoreDetailsSheet from "@/components/detail/StoreDetailsSheet";
 import StoreCard from "@/components/cards/StoreCard";
 import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
@@ -59,10 +57,10 @@ export default function Stores() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingHorizontal: 12,
-          flexGrow: 1,
+          padding: 12,
           paddingBottom: LIST_BOTTOM_PADDING,
           gap: 10,
+          flexGrow: 1,
         }}
         renderItem={({ item: store }) => (
           <StoreCard

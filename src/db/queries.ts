@@ -13,13 +13,6 @@ import { categoryIcon } from "@/utils/categoryIcons";
 import { ItemStoreRef } from "./hooks";
 
 export type ItemRow = Item & {
-  id: number;
-  name: string;
-  imageUri: string | null;
-  quantity: string;
-  unit: string;
-  priority: string;
-  toBuy: boolean;
   categoryName: string | null;
   stores: ItemStoreRef[];
 };
@@ -107,10 +100,10 @@ export async function setToBuy(id: number, toBuy: boolean) {
 }
 
 export const categoriesQuery = () =>
-  db.select().from(categories).orderBy(desc(categories.id));
+  db.select().from(categories).orderBy(desc(categories.updatedAt));
 
 export const storesQuery = () =>
-  db.select().from(stores).orderBy(desc(stores.id));
+  db.select().from(stores).orderBy(desc(stores.updatedAt));
 
 export async function getItem(id: number): Promise<Item | undefined> {
   const rows = await db.select().from(items).where(eq(items.id, id)).limit(1);
@@ -132,7 +125,11 @@ export async function markBought(id: number) {
 
 export async function addStore(name: string): Promise<number> {
   const clean = name.trim();
-  await db.insert(stores).values({ name: clean }).onConflictDoNothing();
+  const now = new Date();
+  await db
+    .insert(stores)
+    .values({ name: clean, createdAt: now, updatedAt: now })
+    .onConflictDoNothing();
   const rows = await db
     .select()
     .from(stores)
@@ -158,7 +155,10 @@ export async function updateStore(
     address: string | null;
   }>,
 ) {
-  await db.update(stores).set(values).where(eq(stores.id, id));
+  await db
+    .update(stores)
+    .set({ ...values, updatedAt: new Date() })
+    .where(eq(stores.id, id));
 }
 
 export async function deleteStore(id: number) {
@@ -166,13 +166,15 @@ export async function deleteStore(id: number) {
 }
 
 // keep your existing addStore(name) as-is — ItemForm's inline "new store" still uses it
-
 export async function createStore(values: {
   name: string;
   imageUri: string | null;
   address: string | null;
 }) {
-  const res = await db.insert(stores).values(values);
+  const now = new Date();
+  const res = await db
+    .insert(stores)
+    .values({ ...values, createdAt: now, updatedAt: now });
   return res.lastInsertRowId;
 }
 
@@ -185,7 +187,10 @@ export async function createCategory(values: {
   name: string;
   icon: string | null;
 }) {
-  const res = await db.insert(categories).values(values);
+  const now = new Date();
+  const res = await db
+    .insert(categories)
+    .values({ ...values, createdAt: now, updatedAt: now });
   return res.lastInsertRowId;
 }
 
@@ -193,7 +198,10 @@ export async function updateCategory(
   id: number,
   values: Partial<{ name: string; icon: string | null }>,
 ) {
-  await db.update(categories).set(values).where(eq(categories.id, id));
+  await db
+    .update(categories)
+    .set({ ...values, updatedAt: new Date() })
+    .where(eq(categories.id, id));
 }
 
 export async function deleteCategory(id: number) {
@@ -203,9 +211,15 @@ export async function deleteCategory(id: number) {
 // keep addCategory(name) if anything else still references it, now seeding a guessed icon:
 export async function addCategory(name: string): Promise<number> {
   const clean = name.trim();
+  const now = new Date();
   await db
     .insert(categories)
-    .values({ name: clean, icon: categoryIcon(clean) })
+    .values({
+      name: clean,
+      icon: categoryIcon(clean),
+      createdAt: now,
+      updatedAt: now,
+    })
     .onConflictDoNothing();
   const rows = await db
     .select()

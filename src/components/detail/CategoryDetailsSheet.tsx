@@ -1,19 +1,21 @@
 import BottomSheet from "@/components/layouts/BottomSheet";
+import { categoryIcon } from "@/utils/categoryIcons";
 import { useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { ScrollView } from "react-native-gesture-handler";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { Store } from "@/db/schema";
-import { ItemRow } from "@/db/queries";
+import type { Category } from "@/db/schema";
+import type { ItemRow } from "@/db/queries";
 
 const PREVIEW_ITEMS = 10;
 
 type Props = {
   visible: boolean;
-  item: Store | null;
+  category: Category | null;
   itemsCount: number;
-  storeItems: ItemRow[];
+  categoryItems: ItemRow[];
+  accentColor: string;
   onClose: () => void;
   onEdit: () => void;
 };
@@ -49,58 +51,42 @@ function Row({
   );
 }
 
-export default function StoreDetailsSheet({
+export default function CategoryDetailsSheet({
   visible,
-  item,
+  category,
   itemsCount,
-  storeItems,
+  categoryItems,
+  accentColor,
   onClose,
   onEdit,
 }: Props) {
   const c = useColors();
   const router = useRouter();
-  if (!item) return null;
+  if (!category) return null;
 
-  const previewItems = storeItems.slice(0, PREVIEW_ITEMS);
-  const hasMore = storeItems.length > PREVIEW_ITEMS;
+  const icon = category.icon ?? categoryIcon(category.name);
+  const previewItems = categoryItems.slice(0, PREVIEW_ITEMS);
+  const hasMore = categoryItems.length > PREVIEW_ITEMS;
 
   function viewAllInPantry() {
-    const id = item!.id;
+    const id = category!.id;
     onClose();
-    router.push({ pathname: "/pantry", params: { storeId: String(id) } });
+    router.push({ pathname: "/pantry", params: { categoryId: String(id) } });
   }
 
   return (
     <BottomSheet visible={visible} onClose={onClose} maxHeight="95%">
       <View style={[s.header, { borderColor: c.border }]}>
-        {item.imageUri ? (
-          <Image source={{ uri: item.imageUri }} style={s.thumb} />
-        ) : null}
-        <View
-          style={{
-            flex: 1,
-            gap: 20,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <Text style={[s.name, { color: c.text }]} numberOfLines={2}>
-            {item.name}
-          </Text>
+        <View style={[s.iconWrap, { backgroundColor: accentColor + "22" }]}>
+          <Ionicons name={icon as any} size={32} color={accentColor} />
         </View>
+        <Text style={[s.name, { color: c.text }]} numberOfLines={2}>
+          {category.name}
+        </Text>
       </View>
 
       <ScrollView style={{ flex: 1 }}>
         <View style={[s.section]}>
-          {item.address ? (
-            <Row
-              icon="location-outline"
-              label="Address"
-              value={item.address}
-              c={c}
-            />
-          ) : null}
           <Row
             icon="file-tray-full-outline"
             label="Total items"
@@ -115,9 +101,9 @@ export default function StoreDetailsSheet({
               borderColor: c.border,
             }}
           >
-            {previewItems.map((storeItem) => (
+            {previewItems.map((item) => (
               <View
-                key={storeItem.id}
+                key={item.id}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
@@ -134,9 +120,9 @@ export default function StoreDetailsSheet({
                     marginRight: 10,
                   }}
                 >
-                  {storeItem.imageUri ? (
+                  {item.imageUri ? (
                     <Image
-                      source={{ uri: storeItem.imageUri }}
+                      source={{ uri: item.imageUri }}
                       style={{ width: "100%", height: "100%" }}
                       resizeMode="cover"
                     />
@@ -170,11 +156,11 @@ export default function StoreDetailsSheet({
                     }}
                     numberOfLines={1}
                   >
-                    {storeItem.name}
+                    {item.name}
                   </Text>
 
                   <Text style={{ color: c.sub, fontSize: 13, marginLeft: 10 }}>
-                    {storeItem.quantity} {storeItem.unit}
+                    {item.quantity} {item.unit}
                   </Text>
                 </View>
               </View>
@@ -184,18 +170,14 @@ export default function StoreDetailsSheet({
               <Pressable onPress={viewAllInPantry} style={s.viewAllLink}>
                 <Text
                   style={{
-                    color: c.chilliPaper,
+                    color: accentColor,
                     fontWeight: "600",
                     fontSize: 14,
                   }}
                 >
                   View all {itemsCount} items
                 </Text>
-                <Ionicons
-                  name="arrow-forward"
-                  size={16}
-                  color={c.chilliPaper}
-                />
+                <Ionicons name="arrow-forward" size={16} color={accentColor} />
               </Pressable>
             )}
           </View>
@@ -204,11 +186,11 @@ export default function StoreDetailsSheet({
 
       <Pressable
         onPress={onEdit}
-        style={[s.editBtn, { backgroundColor: c.chilliPaper }]}
+        style={[s.editBtn, { backgroundColor: accentColor }]}
       >
         <Ionicons name="create-outline" size={18} color="#fff" />
         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
-          Edit store
+          Edit category
         </Text>
       </Pressable>
     </BottomSheet>
@@ -217,20 +199,20 @@ export default function StoreDetailsSheet({
 
 const s = StyleSheet.create({
   header: {
-    flexDirection: "column",
+    flexDirection: "row",
     gap: 14,
-    alignItems: "flex-start",
+    alignItems: "center",
     borderBottomWidth: 1,
-    paddingBottom: 10,
+    paddingBottom: 16,
   },
-  thumb: {
-    width: "100%",
-    height: "auto",
-    aspectRatio: 4 / 3,
-    borderRadius: 14,
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  placeholder: { alignItems: "center", justifyContent: "center" },
-  name: { fontSize: 28, fontWeight: "800" },
+  name: { fontSize: 24, fontWeight: "800", flex: 1 },
   section: { marginTop: 20 },
   row: {
     flexDirection: "row",
@@ -238,7 +220,6 @@ const s = StyleSheet.create({
     gap: 8,
     paddingVertical: 8,
   },
-  notes: { marginTop: 16, padding: 12, borderRadius: 12 },
   viewAllLink: {
     flexDirection: "row",
     alignItems: "center",

@@ -7,6 +7,7 @@ import m0002 from './0002_plain_pretty_boy.sql';
 import m0003 from './0003_true_karma.sql';
 import m0004 from './0004_sticky_kabuki.sql';
 import m0005 from './0005_flaky_loners.sql';
+import m0006 from './0006_fresh_paibok.sql';
 
   export default {
     journal,
@@ -16,7 +17,8 @@ m0001,
 m0002,
 m0003,
 m0004,
-m0005
+m0005,
+m0006
     }
   }
   

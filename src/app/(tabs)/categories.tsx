@@ -1,3 +1,5 @@
+import CategoryCard from "@/components/cards/CategoryCard";
+import CategoryDetailsSheet from "@/components/detail/CategoryDetailsSheet";
 import Fab from "@/components/Fab";
 import CategoryFormModal from "@/components/form/CategoryFormModal";
 import BottomFadeOverlay from "@/components/layouts/BottomFadeOverlay";
@@ -5,18 +7,9 @@ import EmptyState from "@/components/layouts/EmptyState";
 import { useCategories, useItems } from "@/db/hooks";
 import { createCategory, deleteCategory, updateCategory } from "@/db/queries";
 import type { Category } from "@/db/schema";
-import { categoryIcon } from "@/utils/categoryIcons";
 import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
-import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Alert, FlatList, View } from "react-native";
 
 export default function Categories() {
   const c = useColors();
@@ -25,6 +18,7 @@ export default function Categories() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
+  const [detailsCategory, setDetailsCategory] = useState<Category | null>(null);
 
   const accentColor = c.pumpkin;
   const accentTint = c.offwhite;
@@ -38,26 +32,16 @@ export default function Categories() {
     return counts;
   }, [items]);
 
+  const detailsItems = useMemo(
+    () =>
+      detailsCategory
+        ? items.filter((it) => it.categoryId === detailsCategory.id)
+        : [],
+    [items, detailsCategory],
+  );
+
   const guard = (fn: () => Promise<unknown>) =>
     fn().catch(() => Alert.alert("Something went wrong", "Please try again."));
-
-  function confirmDelete(cat: Category) {
-    const count = itemCount.get(cat.id) ?? 0;
-    Alert.alert(
-      "Delete category?",
-      count > 0
-        ? `“${cat.name}” will be removed. ${count} item${count > 1 ? "s" : ""} will become uncategorized.`
-        : `“${cat.name}” will be removed.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => guard(() => deleteCategory(cat.id)),
-        },
-      ],
-    );
-  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -70,46 +54,16 @@ export default function Categories() {
           gap: 10,
           flexGrow: 1,
         }}
-        renderItem={({ item: cat }) => {
-          const icon = cat.icon ?? categoryIcon(cat.name);
-          const count = itemCount.get(cat.id) ?? 0;
-          return (
-            <View
-              style={[
-                s.row,
-                { backgroundColor: c.card, borderColor: c.border },
-              ]}
-            >
-              <View style={[s.icon]}>
-                <Ionicons name={icon as any} size={24} color={accentColor} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{ color: c.text, fontSize: 16, fontWeight: "600" }}
-                >
-                  {cat.name}
-                </Text>
-                <Text style={{ color: c.sub, fontSize: 13 }}>
-                  {count} item{count === 1 ? "" : "s"}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => setEditing(cat)}
-                hitSlop={8}
-                accessibilityLabel={`Edit ${cat.name}`}
-              >
-                <Ionicons name="create-outline" size={20} color={c.sub} />
-              </Pressable>
-              <Pressable
-                onPress={() => confirmDelete(cat)}
-                hitSlop={8}
-                accessibilityLabel={`Delete ${cat.name}`}
-              >
-                <Ionicons name="trash-outline" size={20} color={c.danger} />
-              </Pressable>
-            </View>
-          );
-        }}
+        renderItem={({ item: cat }) => (
+          <CategoryCard
+            category={cat}
+            count={itemCount.get(cat.id) ?? 0}
+            accentColor={accentColor}
+            onPress={() => setDetailsCategory(cat)}
+            onEdit={() => setEditing(cat)}
+            onDelete={() => guard(() => deleteCategory(cat.id))}
+          />
+        )}
         ListEmptyComponent={
           <EmptyState
             icon="grid-outline"
@@ -131,7 +85,9 @@ export default function Categories() {
       <CategoryFormModal
         visible={addOpen}
         onClose={() => setAddOpen(false)}
-        onSubmit={(v) => createCategory(v)}
+        onSubmit={async (v) => {
+          await createCategory(v);
+        }}
         title="New category"
         submitLabel="Add category"
         accentColor={accentColor}
@@ -141,36 +97,34 @@ export default function Categories() {
       <CategoryFormModal
         visible={editing !== null}
         onClose={() => setEditing(null)}
-        onSubmit={(v) => editing && updateCategory(editing.id, v)}
+        onSubmit={async (v) => {
+          if (!editing) return;
+          await updateCategory(editing.id, v);
+        }}
         initialName={editing?.name}
-        initialIcon={
-          editing?.icon ?? (editing ? categoryIcon(editing.name) : null)
-        }
+        initialIcon={editing?.icon ?? null}
         title="Edit category"
         submitLabel="Save changes"
         accentColor={accentColor}
         accentTint={accentTint}
       />
 
+      <CategoryDetailsSheet
+        visible={detailsCategory !== null}
+        category={detailsCategory}
+        itemsCount={detailsItems.length}
+        categoryItems={detailsItems}
+        accentColor={accentColor}
+        onClose={() => setDetailsCategory(null)}
+        onEdit={() => {
+          if (!detailsCategory) return;
+          const cat = detailsCategory;
+          setDetailsCategory(null);
+          setEditing(cat);
+        }}
+      />
+
       <BottomFadeOverlay />
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

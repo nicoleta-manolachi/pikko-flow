@@ -14,7 +14,13 @@ export type Priority = (typeof PRIORITIES)[number];
 export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
-  icon: text("icon"), // an Ionicons name the user picked; null falls back to a name-based guess
+  icon: text("icon"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // db/schema.ts
@@ -23,6 +29,12 @@ export const stores = sqliteTable("stores", {
   name: text("name").notNull().unique(),
   imageUri: text("image_uri"),
   address: text("address"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 export const items = sqliteTable("items", {

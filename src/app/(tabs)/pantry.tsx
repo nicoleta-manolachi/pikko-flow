@@ -10,8 +10,8 @@ import { deleteImageFile } from "@/utils/images";
 import { applyView } from "@/utils/listing";
 import { LIST_BOTTOM_PADDING, useColors } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -54,6 +54,17 @@ export default function Pantry() {
     storeIds: number[];
   } | null>(null);
   const [detailsItem, setDetailsItem] = useState<ItemRow | null>(null);
+
+  const { storeId: storeIdParam, categoryId: categoryIdParam } =
+    useLocalSearchParams<{ storeId?: string; categoryId?: string }>();
+
+  useEffect(() => {
+    if (storeIdParam) setStoreId(Number(storeIdParam));
+  }, [storeIdParam]);
+
+  useEffect(() => {
+    if (categoryIdParam) setCategoryId(Number(categoryIdParam));
+  }, [categoryIdParam]);
 
   const scrollHandler = useCollapsibleHeaderScrollHandler();
   useResetHeaderOnFocus();
@@ -141,6 +152,20 @@ export default function Pantry() {
               )}
             </Pressable>
           </View>
+
+          <View style={s.header}>
+            <Ionicons name="list-outline" size={16} color={c.sub} />
+            <Text
+              style={{
+                color: c.sub,
+                fontWeight: "700",
+                textTransform: "uppercase",
+                fontSize: 12,
+              }}
+            >
+              Pantry list · {visible.length}
+            </Text>
+          </View>
         </View>
       ) : null}
 
@@ -216,7 +241,7 @@ export default function Pantry() {
         categories={categories}
         stores={stores}
         accentColor={c.farmGreen}
-        accentTint={c.farmGreen300}
+        accentTint={c.lemonGreen400}
       />
 
       <ItemDetailsSheet
@@ -247,6 +272,13 @@ export default function Pantry() {
 }
 
 const s = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 12,
+    marginBottom: 2,
+  },
   search: {
     flex: 1,
     flexDirection: "row",

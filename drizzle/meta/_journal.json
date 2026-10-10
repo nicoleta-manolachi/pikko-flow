@@ -43,6 +43,13 @@
       "when": 1791147536199,
       "tag": "0005_flaky_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791587588143,
+      "tag": "0006_fresh_paibok",
+      "breakpoints": true
     }
   ]
 }
